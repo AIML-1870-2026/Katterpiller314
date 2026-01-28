@@ -260,10 +260,10 @@
             }
 
             update() {
-                // Add slight turbulence to keep movement continuous
-                this.vx += (Math.random() - 0.5) * 0.02;
-                this.vy += (Math.random() - 0.5) * 0.02;
-                this.vz += (Math.random() - 0.5) * 0.02;
+                // Add continuous turbulence to maintain energy
+                this.vx += (Math.random() - 0.5) * 0.1;
+                this.vy += (Math.random() - 0.5) * 0.1;
+                this.vz += (Math.random() - 0.5) * 0.1;
 
                 // Mouse interaction
                 if (mouse.active && config.mouseAttraction !== 0) {
@@ -289,10 +289,11 @@
                 if (Math.abs(this.y) > bound) this.vy *= -1;
                 if (Math.abs(this.z) > config.depth / 2) this.vz *= -1;
 
-                // Much lighter damping to keep movement going
-                this.vx *= 0.998;
-                this.vy *= 0.998;
-                this.vz *= 0.998;
+                // Cap maximum velocity to prevent runaway
+                const maxVel = 5;
+                this.vx = Math.max(-maxVel, Math.min(maxVel, this.vx));
+                this.vy = Math.max(-maxVel, Math.min(maxVel, this.vy));
+                this.vz = Math.max(-maxVel, Math.min(maxVel, this.vz));
             }
 
             project() {
