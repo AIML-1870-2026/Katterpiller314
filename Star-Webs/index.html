@@ -252,14 +252,19 @@
                 this.y = (Math.random() - 0.5) * height;
                 this.z = Math.random() * config.depth - config.depth / 2;
 
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = (Math.random() - 0.5) * 2;
-                this.vz = (Math.random() - 0.5) * 2;
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                this.vz = (Math.random() - 0.5) * 3;
 
                 this.baseHue = Math.random() * 60 - 30;
             }
 
             update() {
+                // Add slight turbulence to keep movement continuous
+                this.vx += (Math.random() - 0.5) * 0.02;
+                this.vy += (Math.random() - 0.5) * 0.02;
+                this.vz += (Math.random() - 0.5) * 0.02;
+
                 // Mouse interaction
                 if (mouse.active && config.mouseAttraction !== 0) {
                     const dx = mouse.x - centerX - this.x;
@@ -284,10 +289,10 @@
                 if (Math.abs(this.y) > bound) this.vy *= -1;
                 if (Math.abs(this.z) > config.depth / 2) this.vz *= -1;
 
-                // Damping
-                this.vx *= 0.99;
-                this.vy *= 0.99;
-                this.vz *= 0.99;
+                // Much lighter damping to keep movement going
+                this.vx *= 0.998;
+                this.vy *= 0.998;
+                this.vz *= 0.998;
             }
 
             project() {
