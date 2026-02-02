@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bee Snake - Collect the Flowers!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐝 Bee Snake 🐝</h1>
+            <div class="score-board">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="high-score">High Score: <span id="highScore">0</span></div>
+            </div>
+        </header>
+
+        <div class="game-info">
+            <div class="flower-legend">
+                <h3>Flower Guide:</h3>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="flower-icon red">🌺</span>
+                        <span>Red: +10 pts</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="flower-icon blue">🌸</span>
+                        <span>Blue: +20 pts</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="flower-icon purple">🌼</span>
+                        <span>Purple: +30 pts</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="flower-icon orange">🌻</span>
+                        <span>Orange: +50 pts (Rare!)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+        <div class="controls">
+            <p>Use Arrow Keys to move the bee</p>
+            <button id="startBtn" class="btn">Start Game</button>
+            <button id="restartBtn" class="btn" style="display: none;">Restart</button>
+        </div>
+
+        <div id="gameOver" class="game-over" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button id="playAgainBtn" class="btn">Play Again</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
