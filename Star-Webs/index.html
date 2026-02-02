@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Webs - Stellar Network Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .controls {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: rgba(20, 20, 40, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            width: 300px;
+        }
+
+        .controls h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #6af;
+            border-bottom: 2px solid #6af;
+            padding-bottom: 5px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aad;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(100, 150, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #6af;
+            cursor: pointer;
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #6af;
+            cursor: pointer;
+            border: none;
+        }
+
+        .control-group .value {
+            display: inline-block;
+            float: right;
+            color: #6af;
+            font-weight: bold;
+        }
+
+        .stats-panel {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            background: rgba(20, 20, 40, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            min-width: 250px;
+        }
+
+        .stats-panel h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #6fa;
+            border-bottom: 2px solid #6fa;
+            padding-bottom: 5px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+
+        .stat-label {
+            color: #aad;
+        }
+
+        .stat-value {
+            color: #6fa;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="stats-panel">
+        <h3>Network Statistics</h3>
+        <div class="stat-row">
+            <span class="stat-label">Nodes:</span>
+            <span class="stat-value" id="nodeCount">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Total Edges:</span>
+            <span class="stat-value" id="edgeCount">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Avg Connections:</span>
+            <span class="stat-value" id="avgConnections">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Network Density:</span>
+            <span class="stat-value" id="networkDensity">0%</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <h2>Stellar Web Controls</h2>
+
+        <div class="control-group">
+            <label>Connectivity Radius <span class="value" id="connectRadiusVal">150</span></label>
+            <input type="range" id="connectRadius" min="50" max="400" value="150" step="10">
+        </div>
+
+        <div class="control-group">
+            <label>Node Size <span class="value" id="nodeSizeVal">3</span></label>
+            <input type="range" id="nodeSize" min="1" max="10" value="3" step="0.5">
+        </div>
+
+        <div class="control-group">
+            <label>Edge Thickness <span class="value" id="edgeThicknessVal">1</span></label>
+            <input type="range" id="edgeThickness" min="0.5" max="5" value="1" step="0.5">
+        </div>
+
+        <div class="control-group">
+            <label>Edge Opacity <span class="value" id="edgeOpacityVal">0.3</span></label>
+            <input type="range" id="edgeOpacity" min="0" max="1" value="0.3" step="0.05">
+        </div>
+
+        <div class="control-group">
+            <label>Node Opacity <span class="value" id="nodeOpacityVal">0.8</span></label>
+            <input type="range" id="nodeOpacity" min="0" max="1" value="0.8" step="0.05">
+        </div>
+
+        <div class="control-group">
+            <label>Movement Speed <span class="value" id="speedVal">1.0</span></label>
+            <input type="range" id="speed" min="0" max="3" value="1.0" step="0.1">
+        </div>
+
+        <div class="control-group">
+            <label>Mouse Attraction <span class="value" id="mouseAttractionVal">0</span></label>
+            <input type="range" id="mouseAttraction" min="-50" max="50" value="0" step="5">
+        </div>
+
+        <div class="control-group">
+            <label>Pulse Speed <span class="value" id="pulseSpeedVal">1.0</span></label>
+            <input type="range" id="pulseSpeed" min="0" max="5" value="1.0" step="0.5">
+        </div>
+
+        <div class="control-group">
+            <label>Color Hue <span class="value" id="colorHueVal">200</span></label>
+            <input type="range" id="colorHue" min="0" max="360" value="200" step="10">
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, centerX, centerY;
+        let nodes = [];
+        let mouse = { x: 0, y: 0, active: false };
+        let time = 0;
+
+        // Configuration
+        const config = {
+            nodeCount: 100,
+            connectRadius: 150,
+            nodeSize: 3,
+            edgeThickness: 1,
+            edgeOpacity: 0.3,
+            nodeOpacity: 0.8,
+            speed: 1.0,
+            depth: 500,
+            mouseAttraction: 0,
+            pulseSpeed: 1.0,
+            colorHue: 200
+        };
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+
+        class Node {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = (Math.random() - 0.5) * width;
+                this.y = (Math.random() - 0.5) * height;
+                this.z = Math.random() * config.depth - config.depth / 2;
+
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                this.vz = (Math.random() - 0.5) * 3;
+
+                this.baseHue = Math.random() * 60 - 30;
+            }
+
+            update() {
+                // Add continuous turbulence to maintain energy
+                this.vx += (Math.random() - 0.5) * 0.1;
+                this.vy += (Math.random() - 0.5) * 0.1;
+                this.vz += (Math.random() - 0.5) * 0.1;
+
+                // Mouse interaction
+                if (mouse.active && config.mouseAttraction !== 0) {
+                    const dx = mouse.x - centerX - this.x;
+                    const dy = mouse.y - centerY - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > 0) {
+                        const force = config.mouseAttraction / 1000;
+                        this.vx += (dx / dist) * force;
+                        this.vy += (dy / dist) * force;
+                    }
+                }
+
+                // Update position
+                this.x += this.vx * config.speed;
+                this.y += this.vy * config.speed;
+                this.z += this.vz * config.speed;
+
+                // Boundary wrapping
+                const bound = Math.max(width, height) / 2;
+                if (Math.abs(this.x) > bound) this.vx *= -1;
+                if (Math.abs(this.y) > bound) this.vy *= -1;
+                if (Math.abs(this.z) > config.depth / 2) this.vz *= -1;
+
+                // Cap maximum velocity to prevent runaway
+                const maxVel = 5;
+                this.vx = Math.max(-maxVel, Math.min(maxVel, this.vx));
+                this.vy = Math.max(-maxVel, Math.min(maxVel, this.vy));
+                this.vz = Math.max(-maxVel, Math.min(maxVel, this.vz));
+            }
+
+            project() {
+                const perspective = 500;
+                const scale = perspective / (perspective + this.z);
+                return {
+                    x: centerX + this.x * scale,
+                    y: centerY + this.y * scale,
+                    scale: scale
+                };
+            }
+        }
+
+        function initNodes() {
+            nodes = [];
+            for (let i = 0; i < config.nodeCount; i++) {
+                nodes.push(new Node());
+            }
+        }
+
+        function drawNode(node, projected, pulse) {
+            const size = config.nodeSize * projected.scale * (1 + pulse * 0.3);
+            const opacity = config.nodeOpacity * projected.scale;
+            const hue = (config.colorHue + node.baseHue + 360) % 360;
+
+            ctx.fillStyle = `hsla(${hue}, 80%, 60%, ${opacity})`;
+            ctx.beginPath();
+            ctx.arc(projected.x, projected.y, size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Glow effect
+            const gradient = ctx.createRadialGradient(
+                projected.x, projected.y, 0,
+                projected.x, projected.y, size * 2
+            );
+            gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, ${opacity * 0.5})`);
+            gradient.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(projected.x, projected.y, size * 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawEdge(proj1, proj2, distance, maxDistance, node1, node2) {
+            const strength = 1 - (distance / maxDistance);
+            const avgScale = (proj1.scale + proj2.scale) / 2;
+            const opacity = config.edgeOpacity * strength * avgScale;
+
+            // Color gradient based on edge length
+            const hue = (config.colorHue + (1 - strength) * 60) % 360;
+
+            ctx.strokeStyle = `hsla(${hue}, 70%, 50%, ${opacity})`;
+            ctx.lineWidth = config.edgeThickness * avgScale;
+            ctx.beginPath();
+            ctx.moveTo(proj1.x, proj1.y);
+            ctx.lineTo(proj2.x, proj2.y);
+            ctx.stroke();
+        }
+
+        function updateStats() {
+            let totalEdges = 0;
+            const maxPossibleEdges = (nodes.length * (nodes.length - 1)) / 2;
+
+            // Count edges
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[i].x - nodes[j].x;
+                    const dy = nodes[i].y - nodes[j].y;
+                    const dz = nodes[i].z - nodes[j].z;
+                    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    if (dist < config.connectRadius) {
+                        totalEdges++;
+                    }
+                }
+            }
+
+            const avgConnections = nodes.length > 0 ? (totalEdges * 2 / nodes.length).toFixed(1) : 0;
+            const density = maxPossibleEdges > 0 ? ((totalEdges / maxPossibleEdges) * 100).toFixed(1) : 0;
+
+            document.getElementById('nodeCount').textContent = nodes.length;
+            document.getElementById('edgeCount').textContent = totalEdges;
+            document.getElementById('avgConnections').textContent = avgConnections;
+            document.getElementById('networkDensity').textContent = density + '%';
+        }
+
+        function animate() {
+            time += 0.016;
+            const pulse = Math.sin(time * config.pulseSpeed) * 0.5 + 0.5;
+
+            // Clear canvas with fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Update nodes
+            nodes.forEach(node => node.update());
+
+            // Project nodes
+            const projected = nodes.map(node => ({
+                node: node,
+                proj: node.project()
+            }));
+
+            // Sort by z-depth for proper rendering
+            projected.sort((a, b) => a.node.z - b.node.z);
+
+            // Draw edges
+            let edgeCount = 0;
+            for (let i = 0; i < projected.length; i++) {
+                for (let j = i + 1; j < projected.length; j++) {
+                    const node1 = projected[i].node;
+                    const node2 = projected[j].node;
+                    const proj1 = projected[i].proj;
+                    const proj2 = projected[j].proj;
+
+                    const dx = node1.x - node2.x;
+                    const dy = node1.y - node2.y;
+                    const dz = node1.z - node2.z;
+                    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    if (dist < config.connectRadius) {
+                        drawEdge(proj1, proj2, dist, config.connectRadius, node1, node2);
+                        edgeCount++;
+                    }
+                }
+            }
+
+            // Draw nodes
+            projected.forEach(({ node, proj }) => {
+                drawNode(node, proj, pulse);
+            });
+
+            // Update stats periodically
+            if (Math.floor(time * 60) % 10 === 0) {
+                updateStats();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Setup controls
+        function setupControls() {
+            const controls = {
+                connectRadius: (val) => config.connectRadius = parseFloat(val),
+                nodeSize: (val) => config.nodeSize = parseFloat(val),
+                edgeThickness: (val) => config.edgeThickness = parseFloat(val),
+                edgeOpacity: (val) => config.edgeOpacity = parseFloat(val),
+                nodeOpacity: (val) => config.nodeOpacity = parseFloat(val),
+                speed: (val) => config.speed = parseFloat(val),
+                mouseAttraction: (val) => config.mouseAttraction = parseFloat(val),
+                pulseSpeed: (val) => config.pulseSpeed = parseFloat(val),
+                colorHue: (val) => config.colorHue = parseFloat(val)
+            };
+
+            Object.keys(controls).forEach(key => {
+                const input = document.getElementById(key);
+                const display = document.getElementById(key + 'Val');
+
+                input.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    display.textContent = value;
+                    controls[key](value);
+                });
+            });
+        }
+
+        // Mouse tracking
+        canvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            mouse.active = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            mouse.active = false;
+        });
+
+        // Initialize
+        window.addEventListener('resize', resize);
+        resize();
+        setupControls();
+        initNodes();
+        animate();
+    </script>
+</body>
+</html>
