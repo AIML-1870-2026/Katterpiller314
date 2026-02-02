@@ -9,9 +9,9 @@ const GAME_SPEED = 100; // milliseconds
 
 // Flower types with different values and spawn rates
 const FLOWER_TYPES = [
-    { color: '#FF1493', emoji: '🌺', points: 10, spawnRate: 0.50 },  // Red - 50% chance
-    { color: '#4169E1', emoji: '🌸', points: 20, spawnRate: 0.30 },  // Blue - 30% chance
-    { color: '#9370DB', emoji: '🌼', points: 30, spawnRate: 0.15 },  // Purple - 15% chance
+    { color: '#FF1493', emoji: '🌺', points: 10, spawnRate: 0.50 },  // Pink - 50% chance
+    { color: '#87CEEB', emoji: '💙', points: 20, spawnRate: 0.30 },  // Blue - 30% chance
+    { color: '#9370DB', emoji: '💜', points: 30, spawnRate: 0.15 },  // Purple - 15% chance
     { color: '#FF8C00', emoji: '🌻', points: 50, spawnRate: 0.05 }   // Orange - 5% chance (Rare!)
 ];
 
@@ -106,6 +106,12 @@ function spawnFlower() {
     };
 }
 
+// Start the game loop
+function startGameLoop() {
+    if (gameLoop) return;
+    gameLoop = setInterval(updateGame, GAME_SPEED);
+}
+
 // Start the game
 function startGame() {
     if (gameRunning) return;
@@ -115,7 +121,7 @@ function startGame() {
     startBtn.style.display = 'none';
     restartBtn.style.display = 'inline-block';
 
-    gameLoop = setInterval(updateGame, GAME_SPEED);
+    // Don't start the loop until player makes first move
 }
 
 // Stop the game
@@ -136,6 +142,9 @@ function restartGame() {
 
 // Update game state
 function updateGame() {
+    // Only update if moving
+    if (velocityX === 0 && velocityY === 0) return;
+
     // Move head
     headX += velocityX;
     headY += velocityY;
@@ -259,11 +268,14 @@ function draw() {
 document.addEventListener('keydown', (e) => {
     if (!gameRunning) return;
 
+    const isFirstMove = velocityX === 0 && velocityY === 0;
+
     switch(e.key) {
         case 'ArrowUp':
             if (velocityY === 0) {
                 velocityX = 0;
                 velocityY = -1;
+                if (isFirstMove) startGameLoop();
             }
             e.preventDefault();
             break;
@@ -271,6 +283,7 @@ document.addEventListener('keydown', (e) => {
             if (velocityY === 0) {
                 velocityX = 0;
                 velocityY = 1;
+                if (isFirstMove) startGameLoop();
             }
             e.preventDefault();
             break;
@@ -278,6 +291,7 @@ document.addEventListener('keydown', (e) => {
             if (velocityX === 0) {
                 velocityX = -1;
                 velocityY = 0;
+                if (isFirstMove) startGameLoop();
             }
             e.preventDefault();
             break;
@@ -285,6 +299,7 @@ document.addEventListener('keydown', (e) => {
             if (velocityX === 0) {
                 velocityX = 1;
                 velocityY = 0;
+                if (isFirstMove) startGameLoop();
             }
             e.preventDefault();
             break;
