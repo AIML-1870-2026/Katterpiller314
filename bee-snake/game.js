@@ -129,7 +129,8 @@ function stopGame() {
 
 // Restart the game
 function restartGame() {
-    stopGame();
+    gameRunning = false;
+    clearInterval(gameLoop);
     startGame();
 }
 
