@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World - Olivia Rodrigo Themed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #e8d5f2 0%, #d4b5e8 50%, #c8a5e0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative butterflies */
+        .butterfly {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+
+        .butterfly:nth-child(1) { top: 10%; left: 15%; }
+        .butterfly:nth-child(2) { top: 70%; right: 20%; }
+        .butterfly:nth-child(3) { bottom: 15%; left: 25%; }
+
+        /* Main container */
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 60px 80px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(139, 69, 172, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(216, 191, 216, 0.5);
+        }
+
+        h1 {
+            font-size: 4rem;
+            color: #8b45ac;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a569bd;
+            font-style: italic;
+            margin-top: 15px;
+        }
+
+        .decorative-line {
+            width: 150px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #c8a5e0, transparent);
+            margin: 20px auto;
+        }
+
+        .stars {
+            color: #d4b5e8;
+            font-size: 1.5rem;
+            letter-spacing: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="butterfly">🦋</div>
+    <div class="butterfly">🦋</div>
+    <div class="butterfly">🦋</div>
+
+    <div class="container">
+        <div class="stars">✧ ✧ ✧</div>
+        <div class="decorative-line"></div>
+        <h1>Hello World</h1>
+        <div class="decorative-line"></div>
+        <p class="subtitle">a SOUR beginning</p>
+    </div>
+</body>
+</html>
