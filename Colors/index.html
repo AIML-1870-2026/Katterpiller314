@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RGB Color Studio</title>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #181818;
+      --surface2: #222;
+      --border: #2e2e2e;
+      --text: #e0e0e0;
+      --muted: #777;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 300;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 0.4rem;
+      letter-spacing: 0.08em;
+    }
+
+    .layout {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    /* ── Mixer ── */
+    .mixer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .preview {
+      width: 100%;
+      height: 160px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      transition: background 0.05s;
+    }
+
+    .slider-group { margin-bottom: 1.1rem; }
+
+    .slider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .channel-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .channel-num {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-family: monospace;
+      min-width: 2rem;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #555;
+      cursor: pointer;
+    }
+
+    .hex-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1.4rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .hex-row label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .hex-row input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: monospace;
+      letter-spacing: 0.12em;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .hex-row input:focus { border-color: #555; }
+
+    /* ── Info panel ── */
+    .info-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .panel-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .val-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+    }
+
+    .val-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 0.65rem;
+      text-align: center;
+    }
+
+    .val-box .lbl {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .val-box .num {
+      font-size: 1.1rem;
+      font-weight: 600;
+      font-family: monospace;
+      margin-top: 0.2rem;
+    }
+
+    /* ── Contrast checker ── */
+    .contrast-section {
+      grid-column: 1 / -1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .contrast-section h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .contrast-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .contrast-card {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .contrast-demo {
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .contrast-demo .demo-large {
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .contrast-demo .demo-small {
+      font-size: 0.85rem;
+    }
+
+    .contrast-info {
+      background: var(--surface2);
+      padding: 0.6rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .contrast-ratio {
+      font-family: monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .badge.pass { background: #1a3d1a; color: #5fcf5f; }
+    .badge.fail { background: #3d1a1a; color: #cf5f5f; }
+
+    /* ── Palettes ── */
+    .palettes {
+      grid-column: 1 / -1;
+    }
+
+    .palettes > h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .palette-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .palette-section h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 0.9rem;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+    }
+
+    .swatch {
+      aspect-ratio: 1;
+      border-radius: 7px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.07);
+      position: relative;
+      transition: transform 0.12s, border-color 0.12s;
+      overflow: hidden;
+    }
+
+    .swatch:hover {
+      transform: scale(1.08);
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .swatch-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.7);
+      padding: 3px 4px;
+      border-radius: 0 0 6px 6px;
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+
+    .swatch:hover .swatch-info { opacity: 1; }
+
+    .swatch-hex {
+      font-size: 0.55rem;
+      font-family: monospace;
+      color: #fff;
+      display: block;
+      text-align: center;
+    }
+
+    .swatch-badges {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      margin-top: 2px;
+    }
+
+    .mini-badge {
+      font-size: 0.45rem;
+      font-weight: 700;
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+
+    .mini-badge.pass { background: #1a4a1a; color: #6fe06f; }
+    .mini-badge.fail { background: rgba(200,60,60,0.5); color: #f88; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(5rem);
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #e0e0e0;
+      padding: 0.55rem 1.4rem;
+      border-radius: 100px;
+      font-size: 0.82rem;
+      transition: transform 0.28s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 640px) {
+      .layout { grid-template-columns: 1fr; }
+      .contrast-section, .palettes { grid-column: 1; }
+      .palette-grid { grid-template-columns: 1fr; }
+      .contrast-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>RGB Color Studio</h1>
+  <p>Mix · Explore · Build Palettes</p>
+</header>
+
+<div class="layout">
+
+  <!-- Mixer -->
+  <div class="mixer">
+    <div class="preview" id="preview"></div>
+
+    <div class="slider-group">
+      <div class="slider-row">
+        <span class="channel-label" style="color:#ff6b6b">R</span>
+        <span class="channel-num" id="r-num">128</span>
+      </div>
+      <input type="range" id="r-slider" min="0" max="255" value="128">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-row">
+        <span class="channel-label" style="color:#69db7c">G</span>
+        <span class="channel-num" id="g-num">0</span>
+      </div>
+      <input type="range" id="g-slider" min="0" max="255" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-row">
+        <span class="channel-label" style="color:#74c0fc">B</span>
+        <span class="channel-num" id="b-num">200</span>
+      </div>
+      <input type="range" id="b-slider" min="0" max="255" value="200">
+    </div>
+
+    <div class="hex-row">
+      <label>Hex</label>
+      <input type="text" id="hex-input" maxlength="7" value="#8000c8" spellcheck="false" />
+    </div>
+  </div>
+
+  <!-- Info panel -->
+  <div class="info-panel">
+    <div>
+      <div class="panel-label">RGB</div>
+      <div class="val-grid">
+        <div class="val-box">
+          <div class="lbl">Red</div>
+          <div class="num" id="info-r">128</div>
+        </div>
+        <div class="val-box">
+          <div class="lbl">Green</div>
+          <div class="num" id="info-g">0</div>
+        </div>
+        <div class="val-box">
+          <div class="lbl">Blue</div>
+          <div class="num" id="info-b">200</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">HSL</div>
+      <div class="val-grid">
+        <div class="val-box">
+          <div class="lbl">Hue</div>
+          <div class="num" id="info-h">—</div>
+        </div>
+        <div class="val-box">
+          <div class="lbl">Sat</div>
+          <div class="num" id="info-s">—</div>
+        </div>
+        <div class="val-box">
+          <div class="lbl">Light</div>
+          <div class="num" id="info-l">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">Luminance &amp; Contrast</div>
+      <div class="val-grid">
+        <div class="val-box" style="grid-column: 1 / -1; grid-template-columns: 1fr 1fr;">
+          <div class="lbl">Relative Luminance</div>
+          <div class="num" id="info-lum">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contrast checker for active color -->
+  <div class="contrast-section">
+    <h2>Active Color — Contrast Check</h2>
+    <div class="contrast-grid">
+      <div class="contrast-card">
+        <div class="contrast-demo" id="demo-white">
+          <div class="demo-large">Aa</div>
+          <div class="demo-small">The quick brown fox jumps.</div>
+        </div>
+        <div class="contrast-info">
+          <span class="contrast-ratio" id="ratio-white">—</span>
+          <span class="badge" id="badge-white-aa">AA</span>
+          <span class="badge" id="badge-white-aaa">AAA</span>
+          <span style="color:var(--muted);font-size:0.7rem;">on white</span>
+        </div>
+      </div>
+      <div class="contrast-card">
+        <div class="contrast-demo" id="demo-black">
+          <div class="demo-large">Aa</div>
+          <div class="demo-small">The quick brown fox jumps.</div>
+        </div>
+        <div class="contrast-info">
+          <span class="contrast-ratio" id="ratio-black">—</span>
+          <span class="badge" id="badge-black-aa">AA</span>
+          <span class="badge" id="badge-black-aaa">AAA</span>
+          <span style="color:var(--muted);font-size:0.7rem;">on black</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Palettes -->
+  <div class="palettes">
+    <h2>Generated Palettes — hover a swatch to preview, click to copy hex</h2>
+    <div class="palette-grid">
+      <div class="palette-section">
+        <h3>Complementary</h3>
+        <div class="swatches" id="pal-comp"></div>
+      </div>
+      <div class="palette-section">
+        <h3>Analogous</h3>
+        <div class="swatches" id="pal-analog"></div>
+      </div>
+      <div class="palette-section">
+        <h3>Triadic</h3>
+        <div class="swatches" id="pal-triadic"></div>
+      </div>
+      <div class="palette-section">
+        <h3>Monochromatic</h3>
+        <div class="swatches" id="pal-mono"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+  // ── Color math ──────────────────────────────────────────────
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+  }
+
+  function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    const n = parseInt(hex, 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s;
+    const l = (max + min) / 2;
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+  }
+
+  function hslToRgb(h, s, l) {
+    h /= 360; s /= 100; l /= 100;
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1; if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+  }
+
+  function hslToHex(h, s, l) {
+    s = clamp(s, 0, 100); l = clamp(l, 5, 95);
+    const { r, g, b } = hslToRgb(h, s, l);
+    return rgbToHex(r, g, b);
+  }
+
+  // ── WCAG contrast ───────────────────────────────────────────
+
+  // Relative luminance per WCAG 2.1
+  function relativeLuminance(r, g, b) {
+    const lin = v => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+
+  function contrastRatio(lum1, lum2) {
+    const lighter = Math.max(lum1, lum2);
+    const darker  = Math.min(lum1, lum2);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  // Returns { ratio, AA, AAA } where AA/AAA = true if passes normal text
+  function wcag(r, g, b, bgR, bgG, bgB) {
+    const fg = relativeLuminance(r, g, b);
+    const bg = relativeLuminance(bgR, bgG, bgB);
+    const ratio = contrastRatio(fg, bg);
+    return {
+      ratio: Math.round(ratio * 100) / 100,
+      AA:  ratio >= 4.5,
+      AAA: ratio >= 7.0,
+    };
+  }
+
+  // ── Palette generation ──────────────────────────────────────
+
+  function genPalettes(r, g, b) {
+    const { h, s, l } = rgbToHsl(r, g, b);
+    const base = rgbToHex(r, g, b);
+    const comp = (h + 180) % 360;
+
+    // Complementary: two shades of base + two of complement + comp itself
+    const compPal = [
+      hslToHex(h, s, clamp(l - 20, 5, 95)),
+      base,
+      hslToHex(h, s, clamp(l + 20, 5, 95)),
+      hslToHex(comp, s, clamp(l + 15, 5, 95)),
+      hslToHex(comp, s, l),
+    ];
+
+    // Analogous: ±60° and ±30°
+    const analogPal = [
+      hslToHex((h - 60 + 360) % 360, s, l),
+      hslToHex((h - 30 + 360) % 360, s, l),
+      base,
+      hslToHex((h + 30) % 360, s, l),
+      hslToHex((h + 60) % 360, s, l),
+    ];
+
+    // Triadic: base + 120° + 240°
+    const t1 = (h + 120) % 360;
+    const t2 = (h + 240) % 360;
+    const triadicPal = [
+      base,
+      hslToHex(h,  s, clamp(l + 20, 5, 95)),
+      hslToHex(t1, s, l),
+      hslToHex(t2, s, l),
+      hslToHex(t2, s, clamp(l + 20, 5, 95)),
+    ];
+
+    // Monochromatic: 5 lightness steps, keep hue & saturation
+    const monoPal = [20, 35, 50, 65, 80].map(li => hslToHex(h, s, li));
+
+    return { compPal, analogPal, triadicPal, monoPal };
+  }
+
+  // ── DOM helpers ─────────────────────────────────────────────
+
+  function renderSwatches(containerId, hexes) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    hexes.forEach(hex => {
+      const { r, g, b } = hexToRgb(hex);
+      const onWhite = wcag(r, g, b, 255, 255, 255);
+      const onBlack = wcag(r, g, b,   0,   0,   0);
+
+      // Pick best readable label color
+      const lum = relativeLuminance(r, g, b);
+      const textColor = lum > 0.35 ? '#000' : '#fff';
+
+      const sw = document.createElement('div');
+      sw.className = 'swatch';
+      sw.style.background = hex;
+      sw.title = `Click to copy ${hex}`;
+
+      const info = document.createElement('div');
+      info.className = 'swatch-info';
+
+      const hexLabel = document.createElement('span');
+      hexLabel.className = 'swatch-hex';
+      hexLabel.textContent = hex;
+      info.appendChild(hexLabel);
+
+      // Mini contrast badges
+      const badges = document.createElement('div');
+      badges.className = 'swatch-badges';
+
+      const mkBadge = (label, pass) => {
+        const b = document.createElement('span');
+        b.className = 'mini-badge ' + (pass ? 'pass' : 'fail');
+        b.textContent = label;
+        return b;
+      };
+
+      badges.appendChild(mkBadge('AA▪W',  onWhite.AA));
+      badges.appendChild(mkBadge('AAA▪W', onWhite.AAA));
+      badges.appendChild(mkBadge('AA▪B',  onBlack.AA));
+      badges.appendChild(mkBadge('AAA▪B', onBlack.AAA));
+      info.appendChild(badges);
+      sw.appendChild(info);
+
+      sw.addEventListener('click', () => copyHex(hex));
+      el.appendChild(sw);
+    });
+  }
+
+  // ── Contrast demo (active color) ───────────────────────────
+
+  function updateContrastDemo(r, g, b, hex) {
+    const onWhite = wcag(r, g, b, 255, 255, 255);
+    const onBlack = wcag(r, g, b,   0,   0,   0);
+
+    const demoWhite = document.getElementById('demo-white');
+    demoWhite.style.background = '#fff';
+    demoWhite.style.color = hex;
+
+    const demoBlack = document.getElementById('demo-black');
+    demoBlack.style.background = '#000';
+    demoBlack.style.color = hex;
+
+    const applyBadge = (id, pass) => {
+      const el = document.getElementById(id);
+      el.className = 'badge ' + (pass ? 'pass' : 'fail');
+    };
+
+    document.getElementById('ratio-white').textContent = onWhite.ratio + ':1';
+    applyBadge('badge-white-aa',  onWhite.AA);
+    applyBadge('badge-white-aaa', onWhite.AAA);
+
+    document.getElementById('ratio-black').textContent = onBlack.ratio + ':1';
+    applyBadge('badge-black-aa',  onBlack.AA);
+    applyBadge('badge-black-aaa', onBlack.AAA);
+  }
+
+  // ── Main update ─────────────────────────────────────────────
+
+  function update(r, g, b, skipHex) {
+    r = clamp(Math.round(r), 0, 255);
+    g = clamp(Math.round(g), 0, 255);
+    b = clamp(Math.round(b), 0, 255);
+
+    const hex = rgbToHex(r, g, b);
+
+    // Sliders
+    document.getElementById('r-slider').value = r;
+    document.getElementById('g-slider').value = g;
+    document.getElementById('b-slider').value = b;
+
+    // Slider track gradients (context-aware)
+    document.getElementById('r-slider').style.background =
+      `linear-gradient(to right, rgb(0,${g},${b}), rgb(255,${g},${b}))`;
+    document.getElementById('g-slider').style.background =
+      `linear-gradient(to right, rgb(${r},0,${b}), rgb(${r},255,${b}))`;
+    document.getElementById('b-slider').style.background =
+      `linear-gradient(to right, rgb(${r},${g},0), rgb(${r},${g},255))`;
+
+    // Channel readouts
+    document.getElementById('r-num').textContent = r;
+    document.getElementById('g-num').textContent = g;
+    document.getElementById('b-num').textContent = b;
+
+    // Hex input
+    if (!skipHex) document.getElementById('hex-input').value = hex;
+
+    // Preview
+    document.getElementById('preview').style.background = hex;
+
+    // Info panel
+    document.getElementById('info-r').textContent = r;
+    document.getElementById('info-g').textContent = g;
+    document.getElementById('info-b').textContent = b;
+
+    const hsl = rgbToHsl(r, g, b);
+    document.getElementById('info-h').textContent = hsl.h + '°';
+    document.getElementById('info-s').textContent = hsl.s + '%';
+    document.getElementById('info-l').textContent = hsl.l + '%';
+
+    const lum = relativeLuminance(r, g, b);
+    document.getElementById('info-lum').textContent = lum.toFixed(4);
+
+    // Contrast demo
+    updateContrastDemo(r, g, b, hex);
+
+    // Palettes
+    const { compPal, analogPal, triadicPal, monoPal } = genPalettes(r, g, b);
+    renderSwatches('pal-comp',    compPal);
+    renderSwatches('pal-analog',  analogPal);
+    renderSwatches('pal-triadic', triadicPal);
+    renderSwatches('pal-mono',    monoPal);
+  }
+
+  // ── Toast ───────────────────────────────────────────────────
+
+  let toastTimer;
+  function copyHex(hex) {
+    navigator.clipboard.writeText(hex).then(() => {
+      const t = document.getElementById('toast');
+      t.textContent = 'Copied ' + hex;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+    });
+  }
+
+  // ── Events ──────────────────────────────────────────────────
+
+  ['r-slider', 'g-slider', 'b-slider'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const r = +document.getElementById('r-slider').value;
+      const g = +document.getElementById('g-slider').value;
+      const b = +document.getElementById('b-slider').value;
+      update(r, g, b);
+    });
+  });
+
+  document.getElementById('hex-input').addEventListener('input', e => {
+    const val = e.target.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+      const { r, g, b } = hexToRgb(val);
+      update(r, g, b, true); // skipHex = don't overwrite field while typing
+    }
+  });
+
+  document.getElementById('hex-input').addEventListener('blur', () => {
+    // Normalize hex field on blur
+    const r = +document.getElementById('r-slider').value;
+    const g = +document.getElementById('g-slider').value;
+    const b = +document.getElementById('b-slider').value;
+    document.getElementById('hex-input').value = rgbToHex(r, g, b);
+  });
+
+  // ── Init ────────────────────────────────────────────────────
+  update(128, 0, 200);
+</script>
+</body>
+</html>
