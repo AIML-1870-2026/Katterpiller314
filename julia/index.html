@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fractal Deck — Julia Set Explorer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: radial-gradient(ellipse at center, #1a472a 0%, #0f2e1a 50%, #0a1f12 100%);
+    min-height: 100vh;
+    color: #f5f0e8;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 24px 16px 12px;
+  }
+  header h1 {
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  .suit-ornament { color: #c9a84c; font-size: 1.4rem; }
+  .heart-orn { color: #DC143C; }
+  .spade-orn { color: #8a9bb5; }
+  .diamond-orn { color: #FFB300; }
+  .club-orn { color: #4CAF50; }
+  header p {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.85rem;
+    color: #a0b89a;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* Main layout */
+  .main-container {
+    display: grid;
+    grid-template-columns: 600px 320px;
+    gap: 24px;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 16px 16px;
+    justify-content: center;
+  }
+  @media (max-width: 1024px) {
+    .main-container { grid-template-columns: 1fr; max-width: 620px; }
+  }
+
+  /* Canvas card */
+  .canvas-card {
+    background: #f5f0e8;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 2px solid #c9a84c;
+    position: relative;
+  }
+  #juliaCanvas {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
+    border-radius: 6px;
+    background: #111;
+  }
+  .coord-display {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #555;
+    text-align: center;
+    margin-top: 6px;
+    height: 1.2em;
+  }
+
+  /* Controls panel */
+  .controls-panel {
+    background: rgba(245, 240, 232, 0.95);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    border: 2px solid #c9a84c;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+  .controls-panel::-webkit-scrollbar { width: 6px; }
+  .controls-panel::-webkit-scrollbar-thumb { background: #c9a84c; border-radius: 3px; }
+
+  .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #888;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin-bottom: 4px;
+  }
+
+  /* Suit selector */
+  .suit-selector {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .suit-btn {
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    border: 2px solid #ccc;
+    background: #fff;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .suit-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .suit-btn.active { border-width: 3px; transform: translateY(-2px); }
+  .suit-btn.active[data-suit="hearts"] { border-color: #DC143C; background: #fff0f3; }
+  .suit-btn.active[data-suit="spades"] { border-color: #1B1B2F; background: #f0f0f8; }
+  .suit-btn.active[data-suit="diamonds"] { border-color: #FFB300; background: #fffcf0; }
+  .suit-btn.active[data-suit="clubs"] { border-color: #2E7D32; background: #f0f8f0; }
+
+  /* Sliders */
+  .slider-group { display: flex; flex-direction: column; gap: 2px; }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.8rem;
+  }
+  .slider-row label { width: 80px; font-weight: 600; color: #444; flex-shrink: 0; }
+  .slider-row input[type="range"] { flex: 1; accent-color: #c9a84c; }
+  .slider-row .val {
+    width: 60px;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #666;
+  }
+
+  /* Mandelbrot navigator */
+  .mandelbrot-wrap {
+    text-align: center;
+  }
+  #mandelbrotCanvas {
+    border: 2px solid #c9a84c;
+    border-radius: 6px;
+    cursor: crosshair;
+    display: block;
+    margin: 0 auto;
+    background: #111;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 2px solid #c9a84c;
+    background: linear-gradient(135deg, #f5f0e8, #e8dfd0);
+    color: #333;
+    font-family: Georgia, serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .btn:hover { background: linear-gradient(135deg, #fff, #f5f0e8); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-deal {
+    background: linear-gradient(135deg, #2a5a2a, #1a472a);
+    color: #f5f0e8;
+    border-color: #c9a84c;
+    font-size: 1rem;
+    padding: 10px 24px;
+    letter-spacing: 1px;
+  }
+  .btn-deal:hover { background: linear-gradient(135deg, #3a6a3a, #2a5a2a); }
+  .btn-save {
+    background: linear-gradient(135deg, #c9a84c, #b8953e);
+    color: #fff;
+    border-color: #a07a2a;
+  }
+  .btn-save:hover { background: linear-gradient(135deg, #d9b85c, #c9a84c); }
+
+  /* Preset browser */
+  .preset-browser {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .preset-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .preset-card {
+    width: 36px; height: 44px;
+    border-radius: 4px;
+    border: 1.5px solid #ccc;
+    background: #fff;
+    font-size: 0.6rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    transition: all 0.15s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 700;
+  }
+  .preset-card:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+  .preset-card .rank { font-size: 0.7rem; }
+  .preset-card .suit-icon { font-size: 0.8rem; }
+  .preset-card.hearts { color: #DC143C; }
+  .preset-card.hearts:hover { border-color: #DC143C; }
+  .preset-card.spades { color: #1B1B2F; }
+  .preset-card.spades:hover { border-color: #1B1B2F; }
+  .preset-card.diamonds { color: #d4930a; }
+  .preset-card.diamonds:hover { border-color: #FFB300; }
+  .preset-card.clubs { color: #2E7D32; }
+  .preset-card.clubs:hover { border-color: #2E7D32; }
+
+  /* Hand / Favorites bar */
+  .hand-bar {
+    max-width: 960px;
+    margin: 16px auto;
+    padding: 0 16px;
+  }
+  .hand-inner {
+    background: rgba(245, 240, 232, 0.1);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hand-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #a0b89a;
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    flex-shrink: 0;
+  }
+  .hand-cards {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    overflow-x: auto;
+    padding: 4px 0;
+  }
+  .hand-card {
+    width: 72px;
+    min-width: 72px;
+    height: 90px;
+    border-radius: 6px;
+    border: 2px solid #c9a84c;
+    background: #f5f0e8;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .hand-card:hover { transform: translateY(-6px) rotate(-2deg); }
+  .hand-card canvas {
+    width: 100%;
+    height: 68px;
+    display: block;
+    border-radius: 4px 4px 0 0;
+  }
+  .hand-card .hand-card-info {
+    font-size: 0.5rem;
+    text-align: center;
+    color: #555;
+    padding: 1px 2px;
+    font-family: -apple-system, sans-serif;
+    line-height: 1.2;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .hand-card .remove-btn {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 0.6rem;
+    border: none;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .hand-card:hover .remove-btn { display: flex; }
+  .hand-empty {
+    color: #6a7a6a;
+    font-size: 0.8rem;
+    font-style: italic;
+    padding: 8px;
+  }
+  .btn-clear-hand {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.4);
+    color: #a0b89a;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: -apple-system, sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-clear-hand:hover { background: rgba(201,168,76,0.15); color: #f5f0e8; }
+
+  /* Card flip overlay */
+  .card-flip-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .card-flip-overlay.active { display: flex; }
+  .flip-card {
+    width: 220px;
+    height: 310px;
+    perspective: 800px;
+  }
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .flip-card-inner.flipped { transform: rotateY(180deg); }
+  .flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    border: 3px solid #c9a84c;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  .flip-card-front {
+    background: linear-gradient(135deg, #1a472a 0%, #2a5a3a 50%, #1a472a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .flip-card-front .card-back-design {
+    font-size: 3rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .flip-card-front .card-back-border {
+    position: absolute;
+    inset: 8px;
+    border: 2px solid rgba(201,168,76,0.4);
+    border-radius: 8px;
+  }
+  .flip-card-back {
+    background: #f5f0e8;
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+  .flip-card-back .dealt-suit {
+    font-size: 2rem;
+    margin-bottom: 4px;
+  }
+  .flip-card-back .dealt-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .flip-card-back .dealt-c {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #777;
+    margin-bottom: 8px;
+  }
+  .flip-card-back canvas {
+    width: 180px;
+    height: 180px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+  }
+
+  /* Hint text */
+  .hint {
+    font-family: -apple-system, sans-serif;
+    font-size: 0.7rem;
+    color: #6a7a6a;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* Zoom info */
+  .zoom-info {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #666;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>
+    <span class="heart-orn">♥</span>
+    <span class="spade-orn">♠</span>
+    The Fractal Deck
+    <span class="diamond-orn">♦</span>
+    <span class="club-orn">♣</span>
+  </h1>
+  <p>A Julia Set Explorer</p>
+</header>
+
+<div class="main-container">
+  <!-- Julia canvas -->
+  <div class="canvas-card">
+    <canvas id="juliaCanvas" width="576" height="576"></canvas>
+    <div class="coord-display" id="coordDisplay">&nbsp;</div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-panel">
+    <div>
+      <div class="section-label">Suit / Palette</div>
+      <div class="suit-selector">
+        <button class="suit-btn active" data-suit="hearts" onclick="switchSuit('hearts')">♥</button>
+        <button class="suit-btn" data-suit="spades" onclick="switchSuit('spades')">♠</button>
+        <button class="suit-btn" data-suit="diamonds" onclick="switchSuit('diamonds')">♦</button>
+        <button class="suit-btn" data-suit="clubs" onclick="switchSuit('clubs')">♣</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">c Parameter</div>
+      <div class="slider-group">
+        <div class="slider-row">
+          <label>Real (a)</label>
+          <input type="range" id="cRealSlider" min="-2" max="2" step="0.001" value="-0.7" oninput="onSliderChange()">
+          <span class="val" id="cRealVal">-0.7000</span>
+        </div>
+        <div class="slider-row">
+          <label>Imag (b)</label>
+          <input type="range" id="cImagSlider" min="-2" max="2" step="0.001" value="0.27015" oninput="onSliderChange()">
+          <span class="val" id="cImagVal">0.2702</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Iterations</div>
+      <div class="slider-row">
+        <label>Max</label>
+        <input type="range" id="iterSlider" min="50" max="500" step="10" value="200" oninput="onIterChange()">
+        <span class="val" id="iterVal">200</span>
+      </div>
+    </div>
+
+    <div class="zoom-info">Zoom: <span id="zoomVal">1.00</span>x &nbsp; | &nbsp; Scroll to zoom, drag to pan</div>
+
+    <div class="mandelbrot-wrap">
+      <div class="section-label">Mandelbrot Navigator</div>
+      <canvas id="mandelbrotCanvas" width="200" height="200"></canvas>
+      <div class="hint">Click to pick c-value</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-deal" onclick="deal()">🂠 Deal</button>
+      <button class="btn btn-save" onclick="saveToHand()">♠ Save</button>
+      <button class="btn" onclick="resetView()">↺ Reset</button>
+    </div>
+
+    <div class="preset-browser">
+      <div class="section-label">The Deck — Presets</div>
+      <div id="presetContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Hand bar -->
+<div class="hand-bar">
+  <div class="hand-inner">
+    <div class="hand-label">HAND</div>
+    <div class="hand-cards" id="handCards">
+      <div class="hand-empty">Click "Save" to collect fractals here...</div>
+    </div>
+    <button class="btn-clear-hand" onclick="clearHand()">Clear</button>
+  </div>
+</div>
+
+<!-- Card flip overlay -->
+<div class="card-flip-overlay" id="flipOverlay" onclick="closeFlip(event)">
+  <div class="flip-card">
+    <div class="flip-card-inner" id="flipInner">
+      <div class="flip-card-front">
+        <div class="card-back-border"></div>
+        <div class="card-back-design">♠♥<br>♦♣</div>
+      </div>
+      <div class="flip-card-back">
+        <div class="dealt-suit" id="dealtSuit"></div>
+        <div class="dealt-name" id="dealtName"></div>
+        <div class="dealt-c" id="dealtC"></div>
+        <canvas id="dealtCanvas" width="180" height="180"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIGURATION =====
+const JULIA_SIZE = 576;
+const MANDEL_SIZE = 200;
+const PREVIEW_SCALE = 4; // render at 1/4 during interaction
+
+// ===== PALETTES =====
+const palettes = {
+  hearts: {
+    name: 'Hearts',
+    symbol: '♥',
+    accent: '#DC143C',
+    interior: [40, 5, 10],
+    stops: [
+      [100, 10, 30],
+      [180, 30, 60],
+      [220, 80, 100],
+      [230, 160, 140],
+      [255, 215, 180],
+      [250, 200, 160],
+      [220, 100, 110],
+      [180, 40, 70],
+    ]
+  },
+  spades: {
+    name: 'Spades',
+    symbol: '♠',
+    accent: '#1B1B2F',
+    interior: [5, 5, 15],
+    stops: [
+      [10, 10, 40],
+      [30, 30, 80],
+      [60, 70, 140],
+      [100, 120, 190],
+      [180, 200, 230],
+      [140, 160, 210],
+      [70, 80, 150],
+      [20, 20, 60],
+    ]
+  },
+  diamonds: {
+    name: 'Diamonds',
+    symbol: '♦',
+    accent: '#FFB300',
+    interior: [30, 20, 5],
+    stops: [
+      [60, 40, 10],
+      [140, 90, 10],
+      [220, 160, 20],
+      [255, 210, 60],
+      [255, 250, 200],
+      [200, 230, 255],
+      [120, 180, 240],
+      [80, 60, 20],
+    ]
+  },
+  clubs: {
+    name: 'Clubs',
+    symbol: '♣',
+    accent: '#2E7D32',
+    interior: [10, 25, 10],
+    stops: [
+      [20, 50, 20],
+      [40, 90, 40],
+      [60, 140, 70],
+      [100, 190, 110],
+      [180, 230, 170],
+      [200, 210, 160],
+      [140, 160, 90],
+      [60, 80, 30],
+    ]
+  }
+};
+
+// ===== THE DECK: 52 PRESETS =====
+const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const suitNames = ['hearts','spades','diamonds','clubs'];
+
+const deckData = {
+  hearts: [
+    { c: [-1.0, 0.0], name: 'The Basilica' },
+    { c: [-0.123, 0.745], name: 'The Rabbit' },
+    { c: [-0.75, 0.1], name: 'The Seahorse' },
+    { c: [-0.391, -0.587], name: 'The Bloom' },
+    { c: [-0.54, 0.54], name: 'The Pinwheel' },
+    { c: [0.355, 0.355], name: 'The Spiral' },
+    { c: [-0.4, 0.6], name: 'The Starburst' },
+    { c: [0.34, -0.05], name: 'The Ember' },
+    { c: [-0.194, 0.6557], name: 'The Chandelier' },
+    { c: [-0.12, 0.74], name: 'The Rosette' },
+    { c: [0.28, 0.008], name: 'The Flame' },
+    { c: [-0.7269, 0.1889], name: 'The Heartbeat' },
+    { c: [-0.8, 0.156], name: 'The Dragon' },
+  ],
+  spades: [
+    { c: [0.0, 1.0], name: 'The Dendrite' },
+    { c: [-0.1, 0.651], name: 'The Lightning' },
+    { c: [-0.687, 0.312], name: 'The Phantom' },
+    { c: [-0.52, 0.57], name: 'The Shadow' },
+    { c: [0.295, 0.55], name: 'The Specter' },
+    { c: [-0.624, 0.435], name: 'The Abyss' },
+    { c: [-0.55, 0.478], name: 'The Dagger' },
+    { c: [-0.703, 0.35], name: 'The Raven' },
+    { c: [-0.77, 0.22], name: 'The Eclipse' },
+    { c: [0.285, 0.01], name: 'The Blade' },
+    { c: [-0.15, 0.75], name: 'The Frost' },
+    { c: [-0.7269, 0.1889], name: 'The Vortex' },
+    { c: [-0.62, 0.42], name: 'The Obsidian' },
+  ],
+  diamonds: [
+    { c: [-0.4, 0.6], name: 'The Star' },
+    { c: [0.285, 0.0], name: 'The Prism' },
+    { c: [-0.70176, -0.3842], name: 'The Crystal' },
+    { c: [-0.835, -0.2321], name: 'The Facet' },
+    { c: [0.45, 0.1428], name: 'The Spark' },
+    { c: [-0.75, 0.0], name: 'The Mirror' },
+    { c: [-0.1, 0.651], name: 'The Flash' },
+    { c: [-0.296, 0.568], name: 'The Crown' },
+    { c: [0.37, 0.1], name: 'The Gleam' },
+    { c: [-0.744, 0.148], name: 'The Radiance' },
+    { c: [0.355, 0.355], name: 'The Sunstone' },
+    { c: [-0.481762, -0.531657], name: 'The Tiara' },
+    { c: [-0.8, 0.156], name: 'The Scepter' },
+  ],
+  clubs: [
+    { c: [0.285, 0.01], name: 'The Fern' },
+    { c: [-0.745, 0.113], name: 'The Vine' },
+    { c: [-0.1, 0.651], name: 'The Tendril' },
+    { c: [-0.7, 0.27015], name: 'The Canopy' },
+    { c: [-0.162, 1.04], name: 'The Moss' },
+    { c: [0.3, -0.01], name: 'The Root' },
+    { c: [-0.5251993, -0.5251993], name: 'The Bower' },
+    { c: [-0.63, 0.407], name: 'The Thicket' },
+    { c: [0.32, 0.043], name: 'The Leaf' },
+    { c: [-0.56, 0.52], name: 'The Grove' },
+    { c: [-0.74543, 0.11301], name: 'The Oak' },
+    { c: [-0.194, 0.6557], name: 'The Willow' },
+    { c: [0.355, 0.355], name: 'The Galaxy' },
+  ]
+};
+
+// ===== STATE =====
+let activeSuit = 'hearts';
+let cReal = -0.7;
+let cImag = 0.27015;
+let maxIter = 200;
+let zoom = 1.0;
+let centerX = 0;
+let centerY = 0;
+let iterBuffer = null; // store iteration counts for palette switching
+let escapeBuffer = null; // store |z|² at escape for smooth coloring
+let hand = [];
+let isDragging = false;
+let dragStartX, dragStartY, dragCenterX, dragCenterY;
+let renderTimeout = null;
+let isLowRes = false;
+
+// ===== CANVAS SETUP =====
+const juliaCanvas = document.getElementById('juliaCanvas');
+const juliaCtx = juliaCanvas.getContext('2d');
+const mandelCanvas = document.getElementById('mandelbrotCanvas');
+const mandelCtx = mandelCanvas.getContext('2d');
+
+// ===== JULIA SET COMPUTATION =====
+function computeJulia(width, height, cr, ci, maxIt, zm, cx, cy) {
+  const iters = new Float32Array(width * height);
+  const escapes = new Float32Array(width * height);
+  const scale = 3.0 / (zm * Math.min(width, height));
+
+  for (let py = 0; py < height; py++) {
+    for (let px = 0; px < width; px++) {
+      let zr = (px - width / 2) * scale + cx;
+      let zi = (py - height / 2) * scale + cy;
+
+      let i = 0;
+      let zr2, zi2;
+      for (; i < maxIt; i++) {
+        zr2 = zr * zr;
+        zi2 = zi * zi;
+        if (zr2 + zi2 > 4) break;
+        zi = 2 * zr * zi + ci;
+        zr = zr2 - zi2 + cr;
+      }
+
+      const idx = py * width + px;
+      if (i < maxIt) {
+        // smooth coloring
+        const log_zn = Math.log(zr * zr + zi * zi) / 2;
+        const nu = Math.log(log_zn / Math.LN2) / Math.LN2;
+        iters[idx] = i + 1 - nu;
+      } else {
+        iters[idx] = -1; // interior
+      }
+      escapes[idx] = zr * zr + zi * zi;
+    }
+  }
+  return { iters, escapes };
+}
+
+// ===== COLOR MAPPING =====
+function getColor(t, palette) {
+  const stops = palette.stops;
+  const n = stops.length;
+  const pos = ((t % 1) + 1) % 1;
+  const scaled = pos * n;
+  const idx = Math.floor(scaled);
+  const frac = scaled - idx;
+  const c1 = stops[idx % n];
+  const c2 = stops[(idx + 1) % n];
+  return [
+    Math.round(c1[0] + (c2[0] - c1[0]) * frac),
+    Math.round(c1[1] + (c2[1] - c1[1]) * frac),
+    Math.round(c1[2] + (c2[2] - c1[2]) * frac),
+  ];
+}
+
+function renderFromBuffer(ctx, width, height, iterBuf, palette) {
+  const imgData = ctx.createImageData(width, height);
+  const data = imgData.data;
+  const pal = palettes[palette];
+
+  for (let i = 0; i < width * height; i++) {
+    const it = iterBuf[i];
+    const pi = i * 4;
+    if (it < 0) {
+      data[pi] = pal.interior[0];
+      data[pi + 1] = pal.interior[1];
+      data[pi + 2] = pal.interior[2];
+    } else {
+      const t = it / 40; // cycle through palette
+      const c = getColor(t, pal);
+      data[pi] = c[0];
+      data[pi + 1] = c[1];
+      data[pi + 2] = c[2];
+    }
+    data[pi + 3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// ===== RENDER JULIA =====
+function renderJulia(lowRes) {
+  const scale = lowRes ? PREVIEW_SCALE : 1;
+  const w = Math.floor(JULIA_SIZE / scale);
+  const h = Math.floor(JULIA_SIZE / scale);
+
+  const result = computeJulia(w, h, cReal, cImag, maxIter, zoom, centerX, centerY);
+
+  if (!lowRes) {
+    iterBuffer = result.iters;
+    escapeBuffer = result.escapes;
+  }
+
+  if (lowRes) {
+    // render small then stretch
+    const offscreen = document.createElement('canvas');
+    offscreen.width = w;
+    offscreen.height = h;
+    const offCtx = offscreen.getContext('2d');
+    renderFromBuffer(offCtx, w, h, result.iters, activeSuit);
+    juliaCtx.imageSmoothingEnabled = true;
+    juliaCtx.drawImage(offscreen, 0, 0, JULIA_SIZE, JULIA_SIZE);
+  } else {
+    renderFromBuffer(juliaCtx, w, h, result.iters, activeSuit);
+  }
+  isLowRes = lowRes;
+}
+
+// ===== MANDELBROT NAVIGATOR =====
+let mandelIterBuffer = null;
+
+function computeMandelbrot() {
+  const w = MANDEL_SIZE;
+  const h = MANDEL_SIZE;
+  const iters = new Float32Array(w * h);
+  const mIter = 100;
+
+  for (let py = 0; py < h; py++) {
+    for (let px = 0; px < w; px++) {
+      const cr = (px / w) * 3 - 2;     // -2 to 1
+      const ci = (py / h) * 3 - 1.5;   // -1.5 to 1.5
+
+      let zr = 0, zi = 0;
+      let i = 0;
+      for (; i < mIter; i++) {
+        const zr2 = zr * zr;
+        const zi2 = zi * zi;
+        if (zr2 + zi2 > 4) break;
+        zi = 2 * zr * zi + ci;
+        zr = zr2 - zi2 + cr;
+      }
+
+      if (i < mIter) {
+        const log_zn = Math.log(zr * zr + zi * zi) / 2;
+        const nu = Math.log(log_zn / Math.LN2) / Math.LN2;
+        iters[py * w + px] = i + 1 - nu;
+      } else {
+        iters[py * w + px] = -1;
+      }
+    }
+  }
+  mandelIterBuffer = iters;
+}
+
+function renderMandelbrot() {
+  if (!mandelIterBuffer) computeMandelbrot();
+  renderFromBuffer(mandelCtx, MANDEL_SIZE, MANDEL_SIZE, mandelIterBuffer, activeSuit);
+
+  // Draw c-position marker
+  const px = ((cReal + 2) / 3) * MANDEL_SIZE;
+  const py = ((cImag + 1.5) / 3) * MANDEL_SIZE;
+  mandelCtx.beginPath();
+  mandelCtx.arc(px, py, 5, 0, Math.PI * 2);
+  mandelCtx.strokeStyle = '#fff';
+  mandelCtx.lineWidth = 2;
+  mandelCtx.stroke();
+  mandelCtx.beginPath();
+  mandelCtx.arc(px, py, 3, 0, Math.PI * 2);
+  mandelCtx.fillStyle = '#DC143C';
+  mandelCtx.fill();
+}
+
+// ===== SUIT SWITCHING =====
+function switchSuit(suit) {
+  activeSuit = suit;
+  document.querySelectorAll('.suit-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.suit === suit);
+  });
+
+  // Re-color without recomputing
+  if (iterBuffer) {
+    renderFromBuffer(juliaCtx, JULIA_SIZE, JULIA_SIZE, iterBuffer, activeSuit);
+    isLowRes = false;
+  }
+  renderMandelbrot();
+}
+
+// ===== SLIDER HANDLERS =====
+function onSliderChange() {
+  cReal = parseFloat(document.getElementById('cRealSlider').value);
+  cImag = parseFloat(document.getElementById('cImagSlider').value);
+  document.getElementById('cRealVal').textContent = cReal.toFixed(4);
+  document.getElementById('cImagVal').textContent = cImag.toFixed(4);
+  scheduleRender();
+  renderMandelbrot();
+}
+
+function onIterChange() {
+  maxIter = parseInt(document.getElementById('iterSlider').value);
+  document.getElementById('iterVal').textContent = maxIter;
+  scheduleRender();
+}
+
+function updateSliders() {
+  document.getElementById('cRealSlider').value = cReal;
+  document.getElementById('cImagSlider').value = cImag;
+  document.getElementById('cRealVal').textContent = cReal.toFixed(4);
+  document.getElementById('cImagVal').textContent = cImag.toFixed(4);
+  document.getElementById('iterSlider').value = maxIter;
+  document.getElementById('iterVal').textContent = maxIter;
+  document.getElementById('zoomVal').textContent = zoom.toFixed(2);
+}
+
+// ===== SCHEDULED RENDERING =====
+function scheduleRender() {
+  renderJulia(true); // immediate low-res
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(() => renderJulia(false), 300);
+}
+
+// ===== MOUSE INTERACTIONS (Julia canvas) =====
+juliaCanvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  dragStartX = e.offsetX;
+  dragStartY = e.offsetY;
+  dragCenterX = centerX;
+  dragCenterY = centerY;
+  juliaCanvas.style.cursor = 'grabbing';
+});
+
+juliaCanvas.addEventListener('mousemove', (e) => {
+  // coordinate display
+  const rect = juliaCanvas.getBoundingClientRect();
+  const scaleRatio = JULIA_SIZE / rect.width;
+  const px = (e.clientX - rect.left) * scaleRatio;
+  const py = (e.clientY - rect.top) * scaleRatio;
+  const scale = 3.0 / (zoom * JULIA_SIZE);
+  const zr = (px - JULIA_SIZE / 2) * scale + centerX;
+  const zi = (py - JULIA_SIZE / 2) * scale + centerY;
+  document.getElementById('coordDisplay').textContent =
+    `z = ${zr >= 0 ? ' ' : ''}${zr.toFixed(4)} ${zi >= 0 ? '+' : '−'} ${Math.abs(zi).toFixed(4)}i`;
+
+  if (!isDragging) return;
+  const dx = (e.offsetX - dragStartX) * scaleRatio;
+  const dy = (e.offsetY - dragStartY) * scaleRatio;
+  const moveScale = 3.0 / (zoom * JULIA_SIZE);
+  centerX = dragCenterX - dx * moveScale;
+  centerY = dragCenterY - dy * moveScale;
+  renderJulia(true);
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(() => renderJulia(false), 200);
+});
+
+juliaCanvas.addEventListener('mouseup', () => {
+  if (isDragging) {
+    isDragging = false;
+    juliaCanvas.style.cursor = 'crosshair';
+    renderJulia(false);
+  }
+});
+
+juliaCanvas.addEventListener('mouseleave', () => {
+  if (isDragging) {
+    isDragging = false;
+    juliaCanvas.style.cursor = 'crosshair';
+    renderJulia(false);
+  }
+  document.getElementById('coordDisplay').innerHTML = '&nbsp;';
+});
+
+juliaCanvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+
+  // zoom toward cursor
+  const rect = juliaCanvas.getBoundingClientRect();
+  const scaleRatio = JULIA_SIZE / rect.width;
+  const px = (e.clientX - rect.left) * scaleRatio;
+  const py = (e.clientY - rect.top) * scaleRatio;
+  const scale = 3.0 / (zoom * JULIA_SIZE);
+  const mouseR = (px - JULIA_SIZE / 2) * scale + centerX;
+  const mouseI = (py - JULIA_SIZE / 2) * scale + centerY;
+
+  zoom *= factor;
+  if (zoom < 0.3) zoom = 0.3;
+
+  // adjust center so mouse point stays fixed
+  const newScale = 3.0 / (zoom * JULIA_SIZE);
+  centerX = mouseR - (px - JULIA_SIZE / 2) * newScale;
+  centerY = mouseI - (py - JULIA_SIZE / 2) * newScale;
+
+  document.getElementById('zoomVal').textContent = zoom.toFixed(2);
+  scheduleRender();
+}, { passive: false });
+
+juliaCanvas.addEventListener('dblclick', (e) => {
+  const rect = juliaCanvas.getBoundingClientRect();
+  const scaleRatio = JULIA_SIZE / rect.width;
+  const px = (e.clientX - rect.left) * scaleRatio;
+  const py = (e.clientY - rect.top) * scaleRatio;
+  const scale = 3.0 / (zoom * JULIA_SIZE);
+  centerX = (px - JULIA_SIZE / 2) * scale + centerX;
+  centerY = (py - JULIA_SIZE / 2) * scale + centerY;
+  zoom *= 2;
+  document.getElementById('zoomVal').textContent = zoom.toFixed(2);
+  scheduleRender();
+});
+
+// ===== MANDELBROT CLICK =====
+mandelCanvas.addEventListener('click', (e) => {
+  const rect = mandelCanvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) * (MANDEL_SIZE / rect.width);
+  const py = (e.clientY - rect.top) * (MANDEL_SIZE / rect.height);
+  cReal = (px / MANDEL_SIZE) * 3 - 2;
+  cImag = (py / MANDEL_SIZE) * 3 - 1.5;
+  updateSliders();
+  scheduleRender();
+  renderMandelbrot();
+});
+
+// ===== RESET VIEW =====
+function resetView() {
+  zoom = 1.0;
+  centerX = 0;
+  centerY = 0;
+  document.getElementById('zoomVal').textContent = '1.00';
+  scheduleRender();
+}
+
+// ===== DEAL =====
+const whimsicalAdjectives = [
+  'Ethereal', 'Frozen', 'Burning', 'Hidden', 'Ancient', 'Twisted',
+  'Silent', 'Shattered', 'Infinite', 'Velvet', 'Molten', 'Spectral',
+  'Mystic', 'Crimson', 'Golden', 'Emerald', 'Sapphire', 'Ivory',
+  'Obsidian', 'Celestial', 'Luminous', 'Gilded', 'Arcane', 'Phantom'
+];
+const whimsicalNouns = [
+  'Bloom', 'Tempest', 'Throne', 'Cascade', 'Labyrinth', 'Mirage',
+  'Phoenix', 'Requiem', 'Nebula', 'Odyssey', 'Chalice', 'Serpent',
+  'Aurora', 'Citadel', 'Reverie', 'Enigma', 'Horizon', 'Whisper',
+  'Inferno', 'Solstice', 'Paragon', 'Oracle', 'Zenith', 'Elixir'
+];
+
+function generateName() {
+  const adj = whimsicalAdjectives[Math.floor(Math.random() * whimsicalAdjectives.length)];
+  const noun = whimsicalNouns[Math.floor(Math.random() * whimsicalNouns.length)];
+  return `The ${adj} ${noun}`;
+}
+
+function randomInterestingC() {
+  // Generate c near the Mandelbrot boundary for interesting Julia sets
+  const angle = Math.random() * Math.PI * 2;
+  const r = 0.7 + Math.random() * 0.6; // near boundary region
+  let cr = r * Math.cos(angle);
+  let ci = r * Math.sin(angle);
+
+  // Nudge toward known interesting regions
+  if (Math.random() < 0.3) {
+    // Near main cardioid boundary
+    const t = Math.random() * Math.PI * 2;
+    const rc = 0.5 * Math.cos(t) - 0.25 * Math.cos(2 * t);
+    const ic = 0.5 * Math.sin(t) - 0.25 * Math.sin(2 * t);
+    cr = rc + (Math.random() - 0.5) * 0.15;
+    ci = ic + (Math.random() - 0.5) * 0.15;
+  }
+
+  return [Math.round(cr * 10000) / 10000, Math.round(ci * 10000) / 10000];
+}
+
+function deal() {
+  const suits = Object.keys(palettes);
+  const suit = suits[Math.floor(Math.random() * suits.length)];
+  const [cr, ci] = randomInterestingC();
+  const name = generateName();
+  const pal = palettes[suit];
+
+  // Show overlay
+  const overlay = document.getElementById('flipOverlay');
+  const inner = document.getElementById('flipInner');
+  overlay.classList.add('active');
+  inner.classList.remove('flipped');
+
+  // Set card face content
+  document.getElementById('dealtSuit').textContent = pal.symbol;
+  document.getElementById('dealtSuit').style.color = pal.accent;
+  document.getElementById('dealtName').textContent = name;
+  document.getElementById('dealtName').style.color = pal.accent;
+  document.getElementById('dealtC').textContent = `c = ${cr} + ${ci}i`;
+
+  // Render preview on dealt card canvas
+  const dc = document.getElementById('dealtCanvas');
+  const dCtx = dc.getContext('2d');
+  const dResult = computeJulia(180, 180, cr, ci, 150, 1, 0, 0);
+  renderFromBuffer(dCtx, 180, 180, dResult.iters, suit);
+
+  // Flip after a moment
+  setTimeout(() => inner.classList.add('flipped'), 100);
+
+  // Set main state after animation
+  setTimeout(() => {
+    cReal = cr;
+    cImag = ci;
+    activeSuit = suit;
+    zoom = 1.0;
+    centerX = 0;
+    centerY = 0;
+    updateSliders();
+    switchSuit(suit);
+    renderJulia(false);
+    renderMandelbrot();
+  }, 700);
+}
+
+function closeFlip(e) {
+  if (e.target === document.getElementById('flipOverlay')) {
+    document.getElementById('flipOverlay').classList.remove('active');
+    document.getElementById('flipInner').classList.remove('flipped');
+  }
+}
+
+// ===== HAND / FAVORITES =====
+function loadHand() {
+  try {
+    const saved = localStorage.getItem('fractalDeckHand');
+    if (saved) hand = JSON.parse(saved);
+  } catch (e) { hand = []; }
+}
+
+function persistHand() {
+  localStorage.setItem('fractalDeckHand', JSON.stringify(hand));
+}
+
+function saveToHand() {
+  if (hand.length >= 7) {
+    hand.shift(); // remove oldest if full
+  }
+  hand.push({
+    cReal, cImag, suit: activeSuit,
+    zoom, centerX, centerY, maxIter,
+    name: `${palettes[activeSuit].symbol} ${cReal.toFixed(3)}+${cImag.toFixed(3)}i`
+  });
+  persistHand();
+  renderHandBar();
+}
+
+function removeFromHand(idx) {
+  hand.splice(idx, 1);
+  persistHand();
+  renderHandBar();
+}
+
+function loadFromHand(idx) {
+  const card = hand[idx];
+  cReal = card.cReal;
+  cImag = card.cImag;
+  zoom = card.zoom || 1;
+  centerX = card.centerX || 0;
+  centerY = card.centerY || 0;
+  maxIter = card.maxIter || 200;
+  activeSuit = card.suit;
+  updateSliders();
+  switchSuit(card.suit);
+  renderJulia(false);
+  renderMandelbrot();
+}
+
+function clearHand() {
+  hand = [];
+  persistHand();
+  renderHandBar();
+}
+
+function renderHandBar() {
+  const container = document.getElementById('handCards');
+  if (hand.length === 0) {
+    container.innerHTML = '<div class="hand-empty">Click "Save" to collect fractals here...</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  hand.forEach((card, idx) => {
+    const el = document.createElement('div');
+    el.className = 'hand-card';
+    el.onclick = () => loadFromHand(idx);
+
+    // Thumbnail canvas
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 72;
+    thumbCanvas.height = 68;
+    const tCtx = thumbCanvas.getContext('2d');
+    const tResult = computeJulia(72, 68, card.cReal, card.cImag, 80, card.zoom || 1, card.centerX || 0, card.centerY || 0);
+    renderFromBuffer(tCtx, 72, 68, tResult.iters, card.suit);
+
+    const info = document.createElement('div');
+    info.className = 'hand-card-info';
+    info.textContent = card.name || `${card.cReal.toFixed(2)}+${card.cImag.toFixed(2)}i`;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = '×';
+    removeBtn.onclick = (e) => { e.stopPropagation(); removeFromHand(idx); };
+
+    el.appendChild(thumbCanvas);
+    el.appendChild(info);
+    el.appendChild(removeBtn);
+    container.appendChild(el);
+  });
+}
+
+// ===== PRESET BROWSER =====
+function buildPresetBrowser() {
+  const container = document.getElementById('presetContainer');
+  const suitSymbols = { hearts: '♥', spades: '♠', diamonds: '♦', clubs: '♣' };
+  const suitClasses = { hearts: 'hearts', spades: 'spades', diamonds: 'diamonds', clubs: 'clubs' };
+
+  suitNames.forEach(suit => {
+    const row = document.createElement('div');
+    row.className = 'preset-row';
+
+    ranks.forEach((rank, ri) => {
+      const card = document.createElement('div');
+      card.className = `preset-card ${suitClasses[suit]}`;
+      card.title = `${rank}${suitSymbols[suit]} — ${deckData[suit][ri].name}`;
+
+      const rankEl = document.createElement('div');
+      rankEl.className = 'rank';
+      rankEl.textContent = rank;
+
+      const suitEl = document.createElement('div');
+      suitEl.className = 'suit-icon';
+      suitEl.textContent = suitSymbols[suit];
+
+      card.appendChild(rankEl);
+      card.appendChild(suitEl);
+      card.onclick = () => loadPreset(suit, ri);
+      row.appendChild(card);
+    });
+
+    container.appendChild(row);
+  });
+}
+
+function loadPreset(suit, index) {
+  const preset = deckData[suit][index];
+  cReal = preset.c[0];
+  cImag = preset.c[1];
+  activeSuit = suit;
+  zoom = 1.0;
+  centerX = 0;
+  centerY = 0;
+  updateSliders();
+  switchSuit(suit);
+  renderJulia(false);
+  renderMandelbrot();
+}
+
+// ===== INIT =====
+function initApp() {
+  loadHand();
+  computeMandelbrot();
+  renderMandelbrot();
+  renderJulia(false);
+  buildPresetBrowser();
+  renderHandBar();
+  updateSliders();
+}
+
+initApp();
+</script>
+</body>
+</html>

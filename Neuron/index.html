@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Decision Neurons</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-content">
+                <h1>Meeting Decision Neurons</h1>
+                <p class="subtitle">AI-powered decision support for meeting management</p>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- Neuron Selection Cards -->
+            <div class="neuron-cards">
+                <div class="neuron-card active" data-neuron="1">
+                    <div class="neuron-card-icon">&#x1F4C5;</div>
+                    <div class="neuron-card-content">
+                        <h3>Should I Host?</h3>
+                        <p>Decide whether to hold a meeting</p>
+                    </div>
+                    <div class="neuron-status active">Active</div>
+                </div>
+                <div class="neuron-card" data-neuron="2">
+                    <div class="neuron-card-icon">&#x23F0;</div>
+                    <div class="neuron-card-content">
+                        <h3>When to Host?</h3>
+                        <p>Decide timing for the meeting</p>
+                    </div>
+                    <div class="neuron-status">Inactive</div>
+                </div>
+            </div>
+
+            <!-- Interactive Mode Content -->
+            <div class="content-grid" id="interactive-content">
+                <!-- Input Sliders Panel -->
+                <div class="panel input-panel">
+                    <h2>Your Scenario</h2>
+                    <div id="sliders-container"></div>
+                </div>
+
+                <!-- Visualization Panel -->
+                <div class="panel viz-panel">
+                    <h2>Decision Map</h2>
+                    <div class="axis-controls">
+                        <div class="axis-select">
+                            <label>Compare:</label>
+                            <select id="x-axis-select"></select>
+                        </div>
+                        <div class="axis-select">
+                            <label>vs.</label>
+                            <select id="y-axis-select"></select>
+                        </div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="decision-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Decision Output Panel -->
+                <div class="panel decision-panel">
+                    <h2>Verdict</h2>
+                    <div class="decision-card" id="decision-1">
+                        <div class="decision-label">Should I Host?</div>
+                        <div class="decision-result" id="result-1">--</div>
+                        <div class="decision-confidence" id="confidence-1"></div>
+                    </div>
+                    <div class="decision-card disabled" id="decision-2">
+                        <div class="decision-label">When to Host?</div>
+                        <div class="decision-result" id="result-2">--</div>
+                        <div class="decision-confidence" id="confidence-2">Waiting for first decision...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="neuron.js"></script>
+    <script src="visualization.js"></script>
+    <script src="ui.js"></script>
+</body>
+</html>

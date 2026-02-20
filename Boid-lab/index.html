@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Under The Sea</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: #16213e;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #00d9ff;
+        }
+
+        h2 {
+            font-size: 1rem;
+            margin: 20px 0 10px;
+            color: #ff6b6b;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        label .value {
+            color: #00d9ff;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #0f3460;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00d9ff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .preset-btn {
+            background: #0f3460;
+            color: #eee;
+            flex: 1;
+            min-width: 90px;
+        }
+
+        .preset-btn:hover {
+            background: #1a4a7a;
+        }
+
+        .control-btn {
+            background: #00d9ff;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .control-btn:hover {
+            background: #00b8d4;
+        }
+
+        .control-btn.pause {
+            background: #ff6b6b;
+        }
+
+        .control-btn.pause:hover {
+            background: #ff5252;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .controls-row button {
+            flex: 1;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d9ff;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 8px;
+            background: #0f3460;
+            color: #888;
+            border: 2px solid transparent;
+        }
+
+        .toggle-btn.active {
+            border-color: #00d9ff;
+            color: #00d9ff;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            accent-color: #00d9ff;
+        }
+
+        .main-canvas {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        canvas {
+            background: #0f0f23;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.2);
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .obstacle-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .obstacle-controls button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>🌊 Under The Sea</h1>
+        <p style="font-size: 0.8rem; color: #888; margin-bottom: 15px;">
+            Explore emergent flocking behavior through interactive simulation.
+        </p>
+
+        <h2>📊 Statistics</h2>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="fps">60</div>
+                <div class="stat-label">FPS</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="boidCount">100</div>
+                <div class="stat-label">Boids</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="avgSpeed">0</div>
+                <div class="stat-label">Avg Speed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="avgNeighbors">0</div>
+                <div class="stat-label">Avg Neighbors</div>
+            </div>
+        </div>
+
+        <h2>⚙️ Controls</h2>
+        <div class="controls-row">
+            <button class="control-btn" id="pauseBtn">⏸ Pause</button>
+            <button class="control-btn" id="resetBtn">🔄 Reset</button>
+        </div>
+
+        <h2>🎚️ Behavior Parameters</h2>
+
+        <div class="control-group">
+            <label>
+                Separation Weight
+                <span class="value" id="separationVal">1.5</span>
+            </label>
+            <input type="range" id="separation" min="0" max="5" step="0.1" value="1.5">
+            <div class="tooltip">How strongly boids avoid crowding nearby flockmates</div>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Alignment Weight
+                <span class="value" id="alignmentVal">1.0</span>
+            </label>
+            <input type="range" id="alignment" min="0" max="5" step="0.1" value="1.0">
+            <div class="tooltip">How strongly boids match velocity of nearby flockmates</div>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Cohesion Weight
+                <span class="value" id="cohesionVal">1.0</span>
+            </label>
+            <input type="range" id="cohesion" min="0" max="5" step="0.1" value="1.0">
+            <div class="tooltip">How strongly boids steer toward center of nearby flockmates</div>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Neighbor Radius
+                <span class="value" id="radiusVal">50</span>
+            </label>
+            <input type="range" id="radius" min="10" max="150" step="5" value="50">
+            <div class="tooltip">How far each boid can perceive other boids (in pixels)</div>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Max Speed
+                <span class="value" id="maxSpeedVal">4</span>
+            </label>
+            <input type="range" id="maxSpeed" min="1" max="10" step="0.5" value="4">
+            <div class="tooltip">Maximum velocity a boid can achieve</div>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Max Steering Force
+                <span class="value" id="maxForceVal">0.1</span>
+            </label>
+            <input type="range" id="maxForce" min="0.01" max="0.5" step="0.01" value="0.1">
+            <div class="tooltip">How quickly boids can change direction</div>
+        </div>
+
+        <div class="control-group">
+            <label>
+                Boid Count
+                <span class="value" id="countVal">100</span>
+            </label>
+            <input type="range" id="boidCountSlider" min="10" max="300" step="10" value="100">
+            <div class="tooltip">Number of boids in the simulation</div>
+        </div>
+
+        <h2>🎯 Presets</h2>
+        <div class="presets">
+            <button class="preset-btn" id="presetSchooling">🐟 Schooling</button>
+            <button class="preset-btn" id="presetChaotic">🌀 Chaotic</button>
+            <button class="preset-btn" id="presetCluster">⭕ Cluster</button>
+        </div>
+
+        <h2>🔲 Boundary Mode</h2>
+        <div class="toggle-group">
+            <button class="toggle-btn active" id="wrapBtn">↩️ Wrap</button>
+            <button class="toggle-btn" id="bounceBtn">⬅️ Bounce</button>
+        </div>
+        <div class="tooltip">Wrap: boids teleport to opposite edge. Bounce: boids reflect off walls.</div>
+
+        <h2>👁️ Perception</h2>
+        <div class="checkbox-group">
+            <input type="checkbox" id="perceptionCone" checked>
+            <label for="perceptionCone">Enable Perception Cone (FOV)</label>
+        </div>
+        <div class="control-group">
+            <label>
+                Field of View
+                <span class="value" id="fovVal">270</span>°
+            </label>
+            <input type="range" id="fov" min="30" max="360" step="10" value="270">
+            <div class="tooltip">How wide each boid can see (360° = omnidirectional)</div>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="showPerception">
+            <label for="showPerception">Visualize perception cone</label>
+        </div>
+
+        <h2>🚧 Obstacles</h2>
+        <div class="checkbox-group">
+            <input type="checkbox" id="enableObstacles" checked>
+            <label for="enableObstacles">Enable obstacle avoidance</label>
+        </div>
+        <div class="obstacle-controls">
+            <button class="preset-btn" id="addObstacle">➕ Add</button>
+            <button class="preset-btn" id="clearObstacles">🗑️ Clear</button>
+        </div>
+        <div class="tooltip" style="margin-top: 5px;">Click on canvas to place obstacles</div>
+
+        <h2>👑 Special Boids</h2>
+        <div class="checkbox-group">
+            <input type="checkbox" id="enableLeader">
+            <label for="enableLeader">Enable Leader (green)</label>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="enablePredator">
+            <label for="enablePredator">Enable Predator (red)</label>
+        </div>
+        <div class="tooltip">Leader: flock follows. Predator: flock evades. Click canvas to move them.</div>
+
+        <h2>📋 Legend</h2>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00d9ff;"></div>
+                <span>Normal Boid</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00ff88;"></div>
+                <span>Leader</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff4444;"></div>
+                <span>Predator</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff6b6b;"></div>
+                <span>Obstacle</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-canvas">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const container = document.querySelector('.main-canvas');
+            canvas.width = Math.min(container.clientWidth - 40, 1000);
+            canvas.height = Math.min(container.clientHeight - 40, 800);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Simulation state
+        let boids = [];
+        let obstacles = [];
+        let leader = null;
+        let predator = null;
+        let paused = false;
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fps = 60;
+        let placingObstacle = false;
+
+        // Parameters
+        const params = {
+            separation: 1.5,
+            alignment: 1.0,
+            cohesion: 1.0,
+            radius: 50,
+            maxSpeed: 4,
+            maxForce: 0.1,
+            boidCount: 100,
+            boundaryMode: 'wrap',
+            perceptionCone: true,
+            fov: 270,
+            showPerception: false,
+            enableObstacles: true,
+            enableLeader: false,
+            enablePredator: false
+        };
+
+        // Vector helper class
+        class Vector {
+            constructor(x = 0, y = 0) {
+                this.x = x;
+                this.y = y;
+            }
+
+            add(v) {
+                return new Vector(this.x + v.x, this.y + v.y);
+            }
+
+            sub(v) {
+                return new Vector(this.x - v.x, this.y - v.y);
+            }
+
+            mult(n) {
+                return new Vector(this.x * n, this.y * n);
+            }
+
+            div(n) {
+                return n !== 0 ? new Vector(this.x / n, this.y / n) : new Vector();
+            }
+
+            mag() {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+
+            normalize() {
+                const m = this.mag();
+                return m > 0 ? this.div(m) : new Vector();
+            }
+
+            limit(max) {
+                if (this.mag() > max) {
+                    return this.normalize().mult(max);
+                }
+                return new Vector(this.x, this.y);
+            }
+
+            heading() {
+                return Math.atan2(this.y, this.x);
+            }
+
+            static random() {
+                const angle = Math.random() * Math.PI * 2;
+                return new Vector(Math.cos(angle), Math.sin(angle));
+            }
+        }
+
+        // Boid class
+        class Boid {
+            constructor(x, y, isLeader = false, isPredator = false) {
+                this.position = new Vector(x, y);
+                this.velocity = Vector.random().mult(params.maxSpeed * 0.5);
+                this.acceleration = new Vector();
+                this.isLeader = isLeader;
+                this.isPredator = isPredator;
+                this.neighborCount = 0;
+            }
+
+            applyForce(force) {
+                this.acceleration = this.acceleration.add(force);
+            }
+
+            // Check if another boid is within perception cone
+            inPerceptionCone(other) {
+                if (!params.perceptionCone || params.fov >= 360) return true;
+
+                const toOther = other.position.sub(this.position);
+                const heading = this.velocity.heading();
+                const angleToOther = Math.atan2(toOther.y, toOther.x);
+                let angleDiff = angleToOther - heading;
+
+                // Normalize angle difference
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+                const halfFov = (params.fov / 2) * (Math.PI / 180);
+                return Math.abs(angleDiff) < halfFov;
+            }
+
+            getNeighbors(allBoids) {
+                const neighbors = [];
+                for (const other of allBoids) {
+                    if (other === this) continue;
+                    const d = this.position.sub(other.position).mag();
+                    if (d < params.radius && this.inPerceptionCone(other)) {
+                        neighbors.push({ boid: other, distance: d });
+                    }
+                }
+                this.neighborCount = neighbors.length;
+                return neighbors;
+            }
+
+            separation(neighbors) {
+                const steer = new Vector();
+                let count = 0;
+
+                for (const { boid, distance } of neighbors) {
+                    if (distance < params.radius * 0.5) {
+                        const diff = this.position.sub(boid.position).normalize().div(distance || 1);
+                        steer.x += diff.x;
+                        steer.y += diff.y;
+                        count++;
+                    }
+                }
+
+                if (count > 0) {
+                    return steer.div(count).normalize().mult(params.maxSpeed).sub(this.velocity).limit(params.maxForce);
+                }
+                return steer;
+            }
+
+            alignment(neighbors) {
+                if (neighbors.length === 0) return new Vector();
+
+                const avg = new Vector();
+                for (const { boid } of neighbors) {
+                    avg.x += boid.velocity.x;
+                    avg.y += boid.velocity.y;
+                }
+                return avg.div(neighbors.length).normalize().mult(params.maxSpeed).sub(this.velocity).limit(params.maxForce);
+            }
+
+            cohesion(neighbors) {
+                if (neighbors.length === 0) return new Vector();
+
+                const center = new Vector();
+                for (const { boid } of neighbors) {
+                    center.x += boid.position.x;
+                    center.y += boid.position.y;
+                }
+                const target = center.div(neighbors.length);
+                const desired = target.sub(this.position).normalize().mult(params.maxSpeed);
+                return desired.sub(this.velocity).limit(params.maxForce);
+            }
+
+            avoidObstacles() {
+                if (!params.enableObstacles) return new Vector();
+
+                const steer = new Vector();
+                for (const obstacle of obstacles) {
+                    const diff = this.position.sub(new Vector(obstacle.x, obstacle.y));
+                    const d = diff.mag();
+                    if (d < obstacle.radius + params.radius) {
+                        const force = diff.normalize().mult(params.maxForce * 3).div((d / obstacle.radius) || 1);
+                        steer.x += force.x;
+                        steer.y += force.y;
+                    }
+                }
+                return steer.limit(params.maxForce * 2);
+            }
+
+            followLeader() {
+                if (!leader || this.isLeader || this.isPredator) return new Vector();
+
+                const d = this.position.sub(leader.position).mag();
+                if (d < params.radius * 3) {
+                    const desired = leader.position.sub(this.position).normalize().mult(params.maxSpeed);
+                    return desired.sub(this.velocity).limit(params.maxForce * 0.5);
+                }
+                return new Vector();
+            }
+
+            evadePredator() {
+                if (!predator || this.isPredator) return new Vector();
+
+                const d = this.position.sub(predator.position).mag();
+                if (d < params.radius * 2) {
+                    const flee = this.position.sub(predator.position).normalize().mult(params.maxSpeed);
+                    return flee.sub(this.velocity).limit(params.maxForce * 2);
+                }
+                return new Vector();
+            }
+
+            update(allBoids) {
+                this.acceleration = new Vector();
+
+                if (this.isPredator) {
+                    // Predator chases nearest boid
+                    let nearestDist = Infinity;
+                    let nearest = null;
+                    for (const boid of allBoids) {
+                        if (boid === this || boid.isLeader) continue;
+                        const d = this.position.sub(boid.position).mag();
+                        if (d < nearestDist) {
+                            nearestDist = d;
+                            nearest = boid;
+                        }
+                    }
+                    if (nearest && nearestDist < params.radius * 3) {
+                        const chase = nearest.position.sub(this.position).normalize().mult(params.maxSpeed * 1.2);
+                        this.applyForce(chase.sub(this.velocity).limit(params.maxForce));
+                    }
+                } else if (this.isLeader) {
+                    // Leader wanders randomly
+                    const wander = Vector.random().mult(params.maxForce * 0.3);
+                    this.applyForce(wander);
+                } else {
+                    const neighbors = this.getNeighbors(allBoids);
+
+                    const sep = this.separation(neighbors).mult(params.separation);
+                    const ali = this.alignment(neighbors).mult(params.alignment);
+                    const coh = this.cohesion(neighbors).mult(params.cohesion);
+
+                    this.applyForce(sep);
+                    this.applyForce(ali);
+                    this.applyForce(coh);
+
+                    if (params.enableLeader && leader) {
+                        this.applyForce(this.followLeader());
+                    }
+
+                    if (params.enablePredator && predator) {
+                        this.applyForce(this.evadePredator());
+                    }
+                }
+
+                this.applyForce(this.avoidObstacles());
+
+                this.velocity = this.velocity.add(this.acceleration);
+                this.velocity = this.velocity.limit(this.isPredator ? params.maxSpeed * 1.3 : params.maxSpeed);
+                this.position = this.position.add(this.velocity);
+
+                this.handleBoundary();
+            }
+
+            handleBoundary() {
+                const margin = 20;
+
+                if (params.boundaryMode === 'wrap') {
+                    if (this.position.x < 0) this.position.x = canvas.width;
+                    if (this.position.x > canvas.width) this.position.x = 0;
+                    if (this.position.y < 0) this.position.y = canvas.height;
+                    if (this.position.y > canvas.height) this.position.y = 0;
+                } else {
+                    // Bounce
+                    if (this.position.x < margin) {
+                        this.position.x = margin;
+                        this.velocity.x *= -1;
+                    }
+                    if (this.position.x > canvas.width - margin) {
+                        this.position.x = canvas.width - margin;
+                        this.velocity.x *= -1;
+                    }
+                    if (this.position.y < margin) {
+                        this.position.y = margin;
+                        this.velocity.y *= -1;
+                    }
+                    if (this.position.y > canvas.height - margin) {
+                        this.position.y = canvas.height - margin;
+                        this.velocity.y *= -1;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(this.velocity.heading());
+
+                // Draw perception cone if enabled
+                if (params.showPerception && !this.isLeader && !this.isPredator) {
+                    ctx.beginPath();
+                    const halfFov = (params.fov / 2) * (Math.PI / 180);
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, params.radius, -halfFov, halfFov);
+                    ctx.closePath();
+                    ctx.fillStyle = 'rgba(0, 217, 255, 0.05)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0, 217, 255, 0.2)';
+                    ctx.stroke();
+                }
+
+                // Draw boid triangle
+                ctx.beginPath();
+                const size = this.isLeader || this.isPredator ? 12 : 8;
+                ctx.moveTo(size, 0);
+                ctx.lineTo(-size * 0.7, size * 0.5);
+                ctx.lineTo(-size * 0.7, -size * 0.5);
+                ctx.closePath();
+
+                if (this.isLeader) {
+                    ctx.fillStyle = '#00ff88';
+                    ctx.strokeStyle = '#00cc66';
+                } else if (this.isPredator) {
+                    ctx.fillStyle = '#ff4444';
+                    ctx.strokeStyle = '#cc0000';
+                } else {
+                    ctx.fillStyle = '#00d9ff';
+                    ctx.strokeStyle = '#0099cc';
+                }
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        // Initialize boids
+        function initBoids() {
+            boids = [];
+            for (let i = 0; i < params.boidCount; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                boids.push(new Boid(x, y));
+            }
+            updateLeaderPredator();
+        }
+
+        function updateLeaderPredator() {
+            leader = null;
+            predator = null;
+
+            if (params.enableLeader) {
+                leader = new Boid(canvas.width / 2, canvas.height / 2, true, false);
+            }
+            if (params.enablePredator) {
+                predator = new Boid(canvas.width * 0.8, canvas.height * 0.8, false, true);
+            }
+        }
+
+        // Draw obstacles
+        function drawObstacles() {
+            for (const obstacle of obstacles) {
+                ctx.save();
+                ctx.font = `${obstacle.radius * 2}px serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🐡', obstacle.x, obstacle.y);
+                ctx.restore();
+            }
+        }
+
+        // Animation loop
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            // Calculate FPS
+            frameCount++;
+            if (currentTime - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+                document.getElementById('fps').textContent = fps;
+            }
+
+            if (paused) return;
+
+            // Clear canvas
+            ctx.fillStyle = '#0f0f23';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw boundary indicator
+            if (params.boundaryMode === 'bounce') {
+                ctx.strokeStyle = 'rgba(255, 107, 107, 0.3)';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+            }
+
+            drawObstacles();
+
+            // Update and draw all boids
+            const allBoids = [...boids];
+            if (leader) allBoids.push(leader);
+            if (predator) allBoids.push(predator);
+
+            for (const boid of allBoids) {
+                boid.update(allBoids);
+            }
+
+            for (const boid of allBoids) {
+                boid.draw();
+            }
+
+            // Update stats
+            let totalSpeed = 0;
+            let totalNeighbors = 0;
+            for (const boid of boids) {
+                totalSpeed += boid.velocity.mag();
+                totalNeighbors += boid.neighborCount;
+            }
+
+            document.getElementById('boidCount').textContent = boids.length + (leader ? 1 : 0) + (predator ? 1 : 0);
+            document.getElementById('avgSpeed').textContent = (totalSpeed / boids.length).toFixed(1);
+            document.getElementById('avgNeighbors').textContent = (totalNeighbors / boids.length).toFixed(1);
+        }
+
+        // Event listeners for controls
+        function setupControls() {
+            // Sliders
+            const sliders = ['separation', 'alignment', 'cohesion', 'radius', 'maxSpeed', 'maxForce', 'fov'];
+            sliders.forEach(id => {
+                const slider = document.getElementById(id);
+                const display = document.getElementById(id + 'Val');
+                slider.addEventListener('input', () => {
+                    params[id] = parseFloat(slider.value);
+                    display.textContent = slider.value;
+                });
+            });
+
+            // Boid count slider
+            document.getElementById('boidCountSlider').addEventListener('input', (e) => {
+                params.boidCount = parseInt(e.target.value);
+                document.getElementById('countVal').textContent = e.target.value;
+                initBoids();
+            });
+
+            // Pause/Resume
+            document.getElementById('pauseBtn').addEventListener('click', () => {
+                paused = !paused;
+                document.getElementById('pauseBtn').textContent = paused ? '▶ Resume' : '⏸ Pause';
+                document.getElementById('pauseBtn').classList.toggle('pause', !paused);
+            });
+
+            // Reset
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                initBoids();
+            });
+
+            // Presets
+            document.getElementById('presetSchooling').addEventListener('click', () => {
+                setParams({ separation: 1.0, alignment: 2.5, cohesion: 1.5, radius: 60, maxSpeed: 3.5 });
+            });
+
+            document.getElementById('presetChaotic').addEventListener('click', () => {
+                setParams({ separation: 2.0, alignment: 0.3, cohesion: 0.3, radius: 25, maxSpeed: 6 });
+            });
+
+            document.getElementById('presetCluster').addEventListener('click', () => {
+                setParams({ separation: 1.2, alignment: 1.0, cohesion: 3.0, radius: 80, maxSpeed: 3 });
+            });
+
+            // Boundary mode
+            document.getElementById('wrapBtn').addEventListener('click', () => {
+                params.boundaryMode = 'wrap';
+                document.getElementById('wrapBtn').classList.add('active');
+                document.getElementById('bounceBtn').classList.remove('active');
+            });
+
+            document.getElementById('bounceBtn').addEventListener('click', () => {
+                params.boundaryMode = 'bounce';
+                document.getElementById('bounceBtn').classList.add('active');
+                document.getElementById('wrapBtn').classList.remove('active');
+            });
+
+            // Perception
+            document.getElementById('perceptionCone').addEventListener('change', (e) => {
+                params.perceptionCone = e.target.checked;
+            });
+
+            document.getElementById('showPerception').addEventListener('change', (e) => {
+                params.showPerception = e.target.checked;
+            });
+
+            // Obstacles
+            document.getElementById('enableObstacles').addEventListener('change', (e) => {
+                params.enableObstacles = e.target.checked;
+            });
+
+            document.getElementById('addObstacle').addEventListener('click', () => {
+                placingObstacle = true;
+                canvas.style.cursor = 'crosshair';
+            });
+
+            document.getElementById('clearObstacles').addEventListener('click', () => {
+                obstacles = [];
+            });
+
+            // Leader/Predator
+            document.getElementById('enableLeader').addEventListener('change', (e) => {
+                params.enableLeader = e.target.checked;
+                updateLeaderPredator();
+            });
+
+            document.getElementById('enablePredator').addEventListener('change', (e) => {
+                params.enablePredator = e.target.checked;
+                updateLeaderPredator();
+            });
+
+            // Canvas click
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (placingObstacle) {
+                    obstacles.push({ x, y, radius: 30 + Math.random() * 20 });
+                    placingObstacle = false;
+                    canvas.style.cursor = 'default';
+                } else if (params.enableLeader && leader) {
+                    leader.position.x = x;
+                    leader.position.y = y;
+                } else if (params.enablePredator && predator) {
+                    predator.position.x = x;
+                    predator.position.y = y;
+                }
+            });
+        }
+
+        function setParams(newParams) {
+            Object.entries(newParams).forEach(([key, value]) => {
+                params[key] = value;
+                const slider = document.getElementById(key);
+                const display = document.getElementById(key + 'Val');
+                if (slider) slider.value = value;
+                if (display) display.textContent = value;
+            });
+        }
+
+        // Initialize
+        setupControls();
+        initBoids();
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
