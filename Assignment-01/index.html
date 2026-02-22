@@ -1,11 +1,769 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assignment 01 - Katterpiller314</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Readability Explorer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #08080f;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 28px 20px 70px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    header p {
+      color: #4b5563;
+      font-size: 0.95rem;
+    }
+
+    /* ── SECTION HEADER ──────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: #1e1e30;
+    }
+
+    /* ── LAYOUT WRAPPER ──────────────────────────────────── */
+    .page-max {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .page-wide {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    /* ── PREVIEW ─────────────────────────────────────────── */
+    .preview-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #4b5563;
+      margin-bottom: 10px;
+    }
+    #preview-box {
+      border-radius: 18px;
+      padding: 44px 40px;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: text;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+      transition: background-color 0.15s, color 0.15s;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    #preview-box::after {
+      content: 'click to edit';
+      position: absolute;
+      bottom: 10px;
+      right: 16px;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.18);
+      pointer-events: none;
+      font-style: italic;
+    }
+    #preview-text {
+      outline: none;
+      text-align: center;
+      width: 100%;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    /* ── CONTRAST BAR ────────────────────────────────────── */
+    .contrast-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: #0f0f1c;
+      border: 1px solid #1e1e30;
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+    }
+    .contrast-label { color: #4b5563; font-size: 0.82rem; }
+    .contrast-number {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+      min-width: 5.5ch;
+    }
+    .wcag-badge {
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+    .wcag-badge.pass { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+    .wcag-badge.fail { background: #3b0000; color: #f87171; border: 1px solid #7f1d1d; }
+    .contrast-tip {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    /* ── CONTROLS ────────────────────────────────────────── */
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    @media (max-width: 560px) { .controls-row { grid-template-columns: 1fr; } }
+
+    .ctrl-card {
+      background: #0f0f1c;
+      border: 1px solid #1e1e30;
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .ctrl-card label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #4b5563;
+      margin-bottom: 12px;
+    }
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    input[type="color"] {
+      width: 50px;
+      height: 42px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 2px;
+      flex-shrink: 0;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: #08080f;
+      border: 1px solid #1e1e30;
+      border-radius: 8px;
+      color: #e2e8f0;
+      padding: 9px 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #818cf8; }
+    input[type="range"] {
+      width: 100%;
+      margin-top: 4px;
+      accent-color: #818cf8;
+      cursor: pointer;
+    }
+    .size-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #374151;
+      margin-top: 6px;
+    }
+    .size-row .current { color: #818cf8; font-weight: 700; }
+
+    /* ── PRESETS ─────────────────────────────────────────── */
+    .presets-wrap { margin-bottom: 44px; }
+    .preset-categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .preset-cat-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    .preset-list { display: flex; flex-direction: column; gap: 6px; }
+    .preset-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 13px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: left;
+      transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+    }
+    .preset-btn:hover {
+      border-color: rgba(129,140,248,0.5);
+      transform: translateX(4px);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+    }
+    .preset-swatch {
+      display: flex;
+      width: 36px;
+      height: 22px;
+      border-radius: 5px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+    }
+    .preset-swatch span { flex: 1; }
+
+    /* ── GLASSES SECTION ─────────────────────────────────── */
+    .glasses-legend {
+      font-size: 0.72rem;
+      color: #374151;
+      margin-bottom: 18px;
+      text-align: center;
+      font-style: italic;
+    }
+    .glasses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .glasses-card {
+      background: #0f0f1c;
+      border: 1px solid #1e1e30;
+      border-radius: 18px;
+      padding: 20px 16px 18px;
+      text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .glasses-card:hover {
+      border-color: #2d2d50;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+    .glasses-card.normal-vision { border-color: #1e2a40; }
+    .glasses-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+      color: #e2e8f0;
+    }
+    .vision-desc {
+      font-size: 0.7rem;
+      color: #4b5563;
+      margin-bottom: 14px;
+    }
+    .glasses-svg { width: 100%; max-width: 210px; display: block; margin: 0 auto; }
+    .sim-chips {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .sim-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .sim-swatch {
+      width: 46px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .sim-hex {
+      font-family: 'Courier New', monospace;
+      font-size: 0.6rem;
+      color: #374151;
+    }
+    .sim-ratio {
+      margin-top: 8px;
+      font-size: 0.7rem;
+      color: #374151;
+    }
+    .sim-ratio b { color: #6b7280; }
+    .sim-ratio .ratio-badge {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+    .sim-ratio .ratio-badge.pass { background: #052e16; color: #4ade80; }
+    .sim-ratio .ratio-badge.fail { background: #3b0000; color: #f87171; }
+  </style>
 </head>
 <body>
-    <h1>Hello from Katterpiller314!</h1>
+
+  <header>
+    <h1>Readability Explorer</h1>
+    <p>Discover how text reads across color combinations and vision types</p>
+  </header>
+
+  <!-- PREVIEW -->
+  <div class="page-max">
+    <div class="preview-label">Preview (click text to edit)</div>
+    <div id="preview-box">
+      <span contenteditable="true" id="preview-text" spellcheck="false">
+        The quick brown fox jumps over the lazy dog.
+      </span>
+    </div>
+
+    <!-- CONTRAST -->
+    <div class="contrast-bar">
+      <span class="contrast-label">Contrast Ratio</span>
+      <span class="contrast-number" id="contrast-number">—</span>
+      <span class="wcag-badge" id="badge-aa">AA —</span>
+      <span class="wcag-badge" id="badge-aaa">AAA —</span>
+      <span class="wcag-badge" id="badge-large">AA Large —</span>
+      <span class="contrast-tip" id="contrast-tip"></span>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-row">
+      <div class="ctrl-card">
+        <label>Background Color</label>
+        <div class="color-row">
+          <input type="color" id="bg-picker" value="#1e1e2e">
+          <input type="text"  id="bg-hex"    value="#1e1e2e" maxlength="7" spellcheck="false">
+        </div>
+      </div>
+      <div class="ctrl-card">
+        <label>Text Color</label>
+        <div class="color-row">
+          <input type="color" id="text-picker" value="#cdd6f4">
+          <input type="text"  id="text-hex"    value="#cdd6f4" maxlength="7" spellcheck="false">
+        </div>
+      </div>
+      <div class="ctrl-card">
+        <label>Font Size &nbsp;<span id="size-display" style="color:#818cf8;font-weight:700;">20px</span></label>
+        <input type="range" id="font-size" min="10" max="72" value="20">
+        <div class="size-row">
+          <span>10px</span>
+          <span class="current" id="size-mid">20px</span>
+          <span>72px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="presets-wrap">
+      <div class="section-header">
+        <span class="section-title">Presets</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="preset-categories" id="preset-categories"></div>
+    </div>
+  </div>
+
+  <!-- GLASSES -->
+  <div class="page-wide">
+    <div class="section-header">
+      <span class="section-title">Color Vision Simulation</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="glasses-legend">Left lens — large headline text &nbsp;·&nbsp; Right lens — small body text</div>
+    <div class="glasses-grid" id="glasses-grid"></div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────
+    // COLOR BLINDNESS SIMULATION MATRICES
+    // ─────────────────────────────────────────────────────────
+    const VISION_TYPES = [
+      {
+        id: 'normal',
+        name: 'Normal Vision',
+        desc: 'Full color spectrum',
+        matrix: null
+      },
+      {
+        id: 'protanopia',
+        name: 'Protanopia',
+        desc: 'Red-blind · ~1% of males',
+        matrix: [
+          [0.567, 0.433, 0.000],
+          [0.558, 0.442, 0.000],
+          [0.000, 0.242, 0.758]
+        ]
+      },
+      {
+        id: 'deuteranopia',
+        name: 'Deuteranopia',
+        desc: 'Green-blind · ~1% of males',
+        matrix: [
+          [0.625, 0.375, 0.000],
+          [0.700, 0.300, 0.000],
+          [0.000, 0.300, 0.700]
+        ]
+      },
+      {
+        id: 'tritanopia',
+        name: 'Tritanopia',
+        desc: 'Blue-blind · very rare',
+        matrix: [
+          [0.950, 0.050, 0.000],
+          [0.000, 0.433, 0.567],
+          [0.000, 0.475, 0.525]
+        ]
+      },
+      {
+        id: 'achromatopsia',
+        name: 'Achromatopsia',
+        desc: 'No color · grayscale only',
+        matrix: [
+          [0.299, 0.587, 0.114],
+          [0.299, 0.587, 0.114],
+          [0.299, 0.587, 0.114]
+        ]
+      }
+    ];
+
+    // ─────────────────────────────────────────────────────────
+    // COLOR UTILITIES
+    // ─────────────────────────────────────────────────────────
+    function hexToRgb(hex) {
+      const h = hex.replace('#', '');
+      return [
+        parseInt(h.slice(0, 2), 16),
+        parseInt(h.slice(2, 4), 16),
+        parseInt(h.slice(4, 6), 16)
+      ];
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b]
+        .map(v => Math.min(255, Math.max(0, Math.round(v))).toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    function simulateColor(hex, matrix) {
+      if (!matrix) return hex;
+      const [r, g, b] = hexToRgb(hex);
+      const rn = r / 255, gn = g / 255, bn = b / 255;
+      return rgbToHex(
+        (matrix[0][0] * rn + matrix[0][1] * gn + matrix[0][2] * bn) * 255,
+        (matrix[1][0] * rn + matrix[1][1] * gn + matrix[1][2] * bn) * 255,
+        (matrix[2][0] * rn + matrix[2][1] * gn + matrix[2][2] * bn) * 255
+      );
+    }
+
+    function linearize(c) {
+      const s = c / 255;
+      return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    }
+
+    function luminance(hex) {
+      const [r, g, b] = hexToRgb(hex);
+      return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
+    }
+
+    function contrastRatio(hex1, hex2) {
+      const l1 = luminance(hex1), l2 = luminance(hex2);
+      const [hi, lo] = l1 >= l2 ? [l1, l2] : [l2, l1];
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    function isValidHex(v) {
+      return /^#[0-9a-fA-F]{6}$/.test(v);
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────────────────────
+    const state = { bg: '#1e1e2e', text: '#cdd6f4', size: 20 };
+
+    // ─────────────────────────────────────────────────────────
+    // PRESETS
+    // ─────────────────────────────────────────────────────────
+    const PRESETS = {
+      'WCAG Accessible': [
+        { name: 'Pure B&W',        bg: '#ffffff', text: '#000000' },
+        { name: 'Navy & White',    bg: '#1a237e', text: '#ffffff' },
+        { name: 'Forest & Cream',  bg: '#1b5e20', text: '#f1f8e9' },
+        { name: 'Charcoal & Gold', bg: '#212121', text: '#ffd54f' }
+      ],
+      'Dark Mode': [
+        { name: 'Catppuccin',  bg: '#1e1e2e', text: '#cdd6f4' },
+        { name: 'Dracula',     bg: '#282a36', text: '#f8f8f2' },
+        { name: 'Nord',        bg: '#2e3440', text: '#eceff4' },
+        { name: 'Tokyo Night', bg: '#1a1b26', text: '#a9b1d6' }
+      ],
+      'Light / Paper': [
+        { name: 'Sepia',       bg: '#fdf6e3', text: '#3b2f0f' },
+        { name: 'Cool Paper',  bg: '#f0f4f8', text: '#1a202c' },
+        { name: 'Off-White',   bg: '#fafafa', text: '#1a1a1a' },
+        { name: 'Parchment',   bg: '#f5ecd7', text: '#2c1810' }
+      ],
+      'Colorful': [
+        { name: 'Royal Purple', bg: '#5b21b6', text: '#f5f3ff' },
+        { name: 'Deep Ocean',   bg: '#0c4a6e', text: '#e0f2fe' },
+        { name: 'Ember',        bg: '#7c2d12', text: '#fef3c7' },
+        { name: 'Neon Black',   bg: '#000000', text: '#39ff14' }
+      ]
+    };
+
+    // ─────────────────────────────────────────────────────────
+    // GLASSES SVG
+    // ─────────────────────────────────────────────────────────
+    function makeGlassesSVG(simBg, simText) {
+      const frame = '#c8a44a';
+      const fw = 5; // frame stroke-width
+
+      // viewBox 260 x 118
+      // Left lens  center: 70, 62  rx=50, ry=38
+      // Right lens center: 190, 62  rx=50, ry=38
+      // Bridge: M 120 50 Q 130 40 140 50
+      // Left arm: M 20 60 L 2 63
+      // Right arm: M 240 60 L 258 63
+
+      return `<svg viewBox="0 0 260 118" xmlns="http://www.w3.org/2000/svg" class="glasses-svg" aria-hidden="true">
+        <!-- Left arm -->
+        <line x1="2" y1="63" x2="20" y2="60" stroke="${frame}" stroke-width="${fw}" stroke-linecap="round"/>
+
+        <!-- Left lens fill -->
+        <ellipse cx="70" cy="62" rx="50" ry="38" fill="${simBg}"/>
+        <!-- Large "A" headline text -->
+        <text x="70" y="72" text-anchor="middle"
+              font-size="30" font-weight="900"
+              font-family="Georgia,'Times New Roman',serif"
+              fill="${simText}">A</text>
+        <!-- Left lens frame (drawn on top so it clips text at edges) -->
+        <ellipse cx="70" cy="62" rx="50" ry="38" fill="none" stroke="${frame}" stroke-width="${fw}"/>
+
+        <!-- Bridge -->
+        <path d="M 120 50 Q 130 39 140 50" fill="none" stroke="${frame}" stroke-width="4"/>
+
+        <!-- Right lens fill -->
+        <ellipse cx="190" cy="62" rx="50" ry="38" fill="${simBg}"/>
+        <!-- Small body text "abc" -->
+        <text x="190" y="58" text-anchor="middle"
+              font-size="13" font-weight="400"
+              font-family="Arial,Helvetica,sans-serif"
+              fill="${simText}">The quick</text>
+        <text x="190" y="74" text-anchor="middle"
+              font-size="13" font-weight="400"
+              font-family="Arial,Helvetica,sans-serif"
+              fill="${simText}">brown fox</text>
+        <!-- Right lens frame -->
+        <ellipse cx="190" cy="62" rx="50" ry="38" fill="none" stroke="${frame}" stroke-width="${fw}"/>
+
+        <!-- Right arm -->
+        <line x1="240" y1="60" x2="258" y2="63" stroke="${frame}" stroke-width="${fw}" stroke-linecap="round"/>
+
+        <!-- Nose pads -->
+        <ellipse cx="123" cy="68" rx="4" ry="5" fill="none" stroke="${frame}" stroke-width="2" opacity="0.55"/>
+        <ellipse cx="137" cy="68" rx="4" ry="5" fill="none" stroke="${frame}" stroke-width="2" opacity="0.55"/>
+      </svg>`;
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // RENDER
+    // ─────────────────────────────────────────────────────────
+    function render() {
+      const { bg, text, size } = state;
+
+      // Preview
+      const box = document.getElementById('preview-box');
+      box.style.backgroundColor = bg;
+      box.style.color = text;
+      box.style.fontSize = size + 'px';
+
+      // Contrast
+      const ratio = contrastRatio(bg, text);
+      document.getElementById('contrast-number').textContent = ratio.toFixed(2) + ':1';
+
+      function setBadge(id, label, pass) {
+        const el = document.getElementById(id);
+        el.textContent = label + (pass ? ' PASS' : ' FAIL');
+        el.className = 'wcag-badge ' + (pass ? 'pass' : 'fail');
+      }
+      setBadge('badge-aa',    'AA',       ratio >= 4.5);
+      setBadge('badge-aaa',   'AAA',      ratio >= 7.0);
+      setBadge('badge-large', 'AA Large', ratio >= 3.0);
+
+      const tip = document.getElementById('contrast-tip');
+      if      (ratio >= 7.0) tip.textContent = 'Excellent — meets WCAG AAA for all text';
+      else if (ratio >= 4.5) tip.textContent = 'Good — meets WCAG AA for normal text';
+      else if (ratio >= 3.0) tip.textContent = 'Marginal — only passes for large text (18pt+)';
+      else                   tip.textContent = 'Low contrast — may be hard to read';
+
+      // Glasses
+      renderGlasses(bg, text);
+    }
+
+    function renderGlasses(bg, text) {
+      const grid = document.getElementById('glasses-grid');
+      grid.innerHTML = '';
+
+      VISION_TYPES.forEach(v => {
+        const simBg   = simulateColor(bg,   v.matrix);
+        const simText = simulateColor(text, v.matrix);
+        const ratio   = contrastRatio(simBg, simText);
+        const aaPass  = ratio >= 4.5;
+
+        const card = document.createElement('div');
+        card.className = 'glasses-card' + (v.id === 'normal' ? ' normal-vision' : '');
+
+        card.innerHTML = `
+          <h3>${v.name}</h3>
+          <div class="vision-desc">${v.desc}</div>
+          ${makeGlassesSVG(simBg, simText)}
+          <div class="sim-chips">
+            <div class="sim-chip">
+              <div class="sim-swatch" style="background:${simBg}"></div>
+              <div class="sim-hex">${simBg}</div>
+            </div>
+            <div class="sim-chip">
+              <div class="sim-swatch" style="background:${simText}"></div>
+              <div class="sim-hex">${simText}</div>
+            </div>
+          </div>
+          <div class="sim-ratio">
+            Ratio: <b>${ratio.toFixed(2)}:1</b>
+            <span class="ratio-badge ${aaPass ? 'pass' : 'fail'}">${aaPass ? 'AA ✓' : 'AA ✗'}</span>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderPresets() {
+      const wrap = document.getElementById('preset-categories');
+      wrap.innerHTML = '';
+
+      Object.entries(PRESETS).forEach(([cat, items]) => {
+        const col = document.createElement('div');
+        col.innerHTML = `<div class="preset-cat-label">${cat}</div><div class="preset-list"></div>`;
+        const list = col.querySelector('.preset-list');
+
+        items.forEach(p => {
+          const btn = document.createElement('button');
+          btn.className = 'preset-btn';
+          btn.style.background = p.bg;
+          btn.style.color = p.text;
+          btn.dataset.bg   = p.bg;
+          btn.dataset.text = p.text;
+          btn.innerHTML = `
+            <div class="preset-swatch">
+              <span style="background:${p.bg}"></span>
+              <span style="background:${p.text}"></span>
+            </div>
+            ${p.name}
+          `;
+          btn.addEventListener('click', () => {
+            state.bg   = p.bg;
+            state.text = p.text;
+            syncInputs();
+            render();
+          });
+          list.appendChild(btn);
+        });
+
+        wrap.appendChild(col);
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // SYNC INPUTS
+    // ─────────────────────────────────────────────────────────
+    function syncInputs() {
+      document.getElementById('bg-picker').value   = state.bg;
+      document.getElementById('bg-hex').value       = state.bg;
+      document.getElementById('text-picker').value  = state.text;
+      document.getElementById('text-hex').value     = state.text;
+      document.getElementById('font-size').value    = state.size;
+      document.getElementById('size-display').textContent = state.size + 'px';
+      document.getElementById('size-mid').textContent     = state.size + 'px';
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // EVENTS
+    // ─────────────────────────────────────────────────────────
+    function setupEvents() {
+      const bgPicker   = document.getElementById('bg-picker');
+      const bgHex      = document.getElementById('bg-hex');
+      const textPicker = document.getElementById('text-picker');
+      const textHex    = document.getElementById('text-hex');
+      const sizeSlider = document.getElementById('font-size');
+
+      bgPicker.addEventListener('input', () => {
+        state.bg = bgPicker.value;
+        bgHex.value = bgPicker.value;
+        render();
+      });
+      bgHex.addEventListener('input', () => {
+        if (isValidHex(bgHex.value)) {
+          state.bg = bgHex.value;
+          bgPicker.value = bgHex.value;
+          render();
+        }
+      });
+
+      textPicker.addEventListener('input', () => {
+        state.text = textPicker.value;
+        textHex.value = textPicker.value;
+        render();
+      });
+      textHex.addEventListener('input', () => {
+        if (isValidHex(textHex.value)) {
+          state.text = textHex.value;
+          textPicker.value = textHex.value;
+          render();
+        }
+      });
+
+      sizeSlider.addEventListener('input', () => {
+        state.size = parseInt(sizeSlider.value);
+        document.getElementById('size-display').textContent = state.size + 'px';
+        document.getElementById('size-mid').textContent     = state.size + 'px';
+        render();
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // INIT
+    // ─────────────────────────────────────────────────────────
+    renderPresets();
+    setupEvents();
+    render();
+  </script>
 </body>
 </html>
