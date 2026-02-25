@@ -53,44 +53,54 @@
       gap: 1.5rem;
     }
 
-    /* ── Mixer ── */
-    .mixer {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-    }
-
-    .preview {
-      width: 100%;
-      height: 160px;
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      margin-bottom: 1.5rem;
-      transition: background 0.05s;
-    }
-
-    .slider-group { margin-bottom: 1.1rem; }
-
-    .slider-row {
+    /* ── Canvas Mixer ── */
+    .canvas-mixer {
+      background: #1a140a;
+      border: 4px solid #2e2010;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: inset 0 0 28px rgba(0,0,0,0.65), 0 6px 24px rgba(0,0,0,0.5);
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+    }
+
+    #paint-canvas {
+      display: block;
+      width: 100%;
+      border-radius: 4px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .canvas-controls {
+      display: flex;
       align-items: center;
-      margin-bottom: 0.35rem;
+      gap: 0.75rem;
+      padding: 0.65rem 0.25rem 0.2rem;
     }
 
-    .channel-label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
+    .brush-indicator {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: #ffffff;
+      transition: background 0.08s;
+      flex-shrink: 0;
     }
 
-    .channel-num {
-      font-size: 0.8rem;
-      color: var(--muted);
+    .brush-size-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .canvas-label {
+      font-size: 0.7rem;
+      color: #8a7a5a;
       font-family: monospace;
-      min-width: 2rem;
-      text-align: right;
+      flex-shrink: 0;
     }
 
     input[type="range"] {
@@ -112,37 +122,22 @@
       cursor: pointer;
     }
 
-    .hex-row {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-top: 1.4rem;
-      padding-top: 1.4rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .hex-row label {
-      font-size: 0.75rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .hex-row input {
-      flex: 1;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.45rem 0.75rem;
+    .canvas-btn {
+      background: #2a1f0f;
+      border: 1px solid #5a4020;
+      color: #a08050;
       border-radius: 6px;
-      font-size: 1rem;
-      font-family: monospace;
-      letter-spacing: 0.12em;
-      outline: none;
-      transition: border-color 0.15s;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
     }
 
-    .hex-row input:focus { border-color: #555; }
+    .canvas-btn:hover { background: #3a2a15; color: #c0a060; }
+
+    #info-hex { cursor: pointer; transition: color 0.12s; }
+    #info-hex:hover { color: #fff; }
 
     /* ── Info panel ── */
     .info-panel {
@@ -541,37 +536,17 @@
 
 <div class="layout">
 
-  <!-- Mixer -->
-  <div class="mixer">
-    <div class="preview" id="preview"></div>
-
-    <div class="slider-group">
-      <div class="slider-row">
-        <span class="channel-label" style="color:#ff6b6b">R</span>
-        <span class="channel-num" id="r-num">128</span>
+  <!-- Canvas Mixer -->
+  <div class="canvas-mixer">
+    <canvas id="paint-canvas" width="400" height="380"></canvas>
+    <div class="canvas-controls">
+      <div class="brush-indicator" id="brush-indicator"></div>
+      <div class="brush-size-wrap">
+        <span class="canvas-label">Size</span>
+        <input type="range" id="brush-size" min="3" max="45" value="14">
+        <span class="canvas-label" id="brush-size-val">14</span>
       </div>
-      <input type="range" id="r-slider" min="0" max="255" value="128">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-row">
-        <span class="channel-label" style="color:#69db7c">G</span>
-        <span class="channel-num" id="g-num">0</span>
-      </div>
-      <input type="range" id="g-slider" min="0" max="255" value="0">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-row">
-        <span class="channel-label" style="color:#74c0fc">B</span>
-        <span class="channel-num" id="b-num">200</span>
-      </div>
-      <input type="range" id="b-slider" min="0" max="255" value="200">
-    </div>
-
-    <div class="hex-row">
-      <label>Hex</label>
-      <input type="text" id="hex-input" maxlength="7" value="#8000c8" spellcheck="false" />
+      <button class="canvas-btn" id="clear-canvas-btn">Clear</button>
     </div>
   </div>
 
@@ -582,15 +557,19 @@
       <div class="val-grid">
         <div class="val-box">
           <div class="lbl">Red</div>
-          <div class="num" id="info-r">128</div>
+          <div class="num" id="info-r">255</div>
         </div>
         <div class="val-box">
           <div class="lbl">Green</div>
-          <div class="num" id="info-g">0</div>
+          <div class="num" id="info-g">255</div>
         </div>
         <div class="val-box">
           <div class="lbl">Blue</div>
-          <div class="num" id="info-b">200</div>
+          <div class="num" id="info-b">255</div>
+        </div>
+        <div class="val-box" style="grid-column: 1 / -1">
+          <div class="lbl">Hex — click to copy</div>
+          <div class="num" id="info-hex">#ffffff</div>
         </div>
       </div>
     </div>
@@ -725,7 +704,6 @@
       <div class="mix-info">
         <span class="mix-hex" id="mix-hex">#ffffff</span>
         <div class="mix-buttons">
-          <button class="mix-load-btn" id="mix-load-btn">Load into Mixer →</button>
           <button class="mix-reset-btn" id="mix-reset-btn">Reset</button>
         </div>
       </div>
@@ -950,41 +928,18 @@
 
   // ── Main update ─────────────────────────────────────────────
 
-  function update(r, g, b, skipHex) {
+  function update(r, g, b) {
     r = clamp(Math.round(r), 0, 255);
     g = clamp(Math.round(g), 0, 255);
     b = clamp(Math.round(b), 0, 255);
 
     const hex = rgbToHex(r, g, b);
 
-    // Sliders
-    document.getElementById('r-slider').value = r;
-    document.getElementById('g-slider').value = g;
-    document.getElementById('b-slider').value = b;
-
-    // Slider track gradients (context-aware)
-    document.getElementById('r-slider').style.background =
-      `linear-gradient(to right, rgb(0,${g},${b}), rgb(255,${g},${b}))`;
-    document.getElementById('g-slider').style.background =
-      `linear-gradient(to right, rgb(${r},0,${b}), rgb(${r},255,${b}))`;
-    document.getElementById('b-slider').style.background =
-      `linear-gradient(to right, rgb(${r},${g},0), rgb(${r},${g},255))`;
-
-    // Channel readouts
-    document.getElementById('r-num').textContent = r;
-    document.getElementById('g-num').textContent = g;
-    document.getElementById('b-num').textContent = b;
-
-    // Hex input
-    if (!skipHex) document.getElementById('hex-input').value = hex;
-
-    // Preview
-    document.getElementById('preview').style.background = hex;
-
     // Info panel
     document.getElementById('info-r').textContent = r;
     document.getElementById('info-g').textContent = g;
     document.getElementById('info-b').textContent = b;
+    document.getElementById('info-hex').textContent = hex;
 
     const hsl = rgbToHsl(r, g, b);
     document.getElementById('info-h').textContent = hsl.h + '°';
@@ -994,10 +949,8 @@
     const lum = relativeLuminance(r, g, b);
     document.getElementById('info-lum').textContent = lum.toFixed(4);
 
-    // Contrast demo
     updateContrastDemo(r, g, b, hex);
 
-    // Palettes
     const { compPal, analogPal, triadicPal, monoPal } = genPalettes(r, g, b);
     renderSwatches('pal-comp',    compPal);
     renderSwatches('pal-analog',  analogPal);
@@ -1018,32 +971,103 @@
     });
   }
 
-  // ── Events ──────────────────────────────────────────────────
-
-  ['r-slider', 'g-slider', 'b-slider'].forEach(id => {
-    document.getElementById(id).addEventListener('input', () => {
-      const r = +document.getElementById('r-slider').value;
-      const g = +document.getElementById('g-slider').value;
-      const b = +document.getElementById('b-slider').value;
-      update(r, g, b);
-    });
+  document.getElementById('info-hex').addEventListener('click', () => {
+    copyHex(document.getElementById('info-hex').textContent);
   });
 
-  document.getElementById('hex-input').addEventListener('input', e => {
-    const val = e.target.value.trim();
-    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-      const { r, g, b } = hexToRgb(val);
-      update(r, g, b, true); // skipHex = don't overwrite field while typing
+  // ── Paint Canvas ─────────────────────────────────────────────
+
+  const paintCanvas = document.getElementById('paint-canvas');
+  const paintCtx = paintCanvas.getContext('2d');
+  let isPainting = false;
+  let lastPX = null, lastPY = null;
+
+  function drawPaperTexture() {
+    paintCtx.fillStyle = '#f0e8d8';
+    paintCtx.fillRect(0, 0, paintCanvas.width, paintCanvas.height);
+    const imgData = paintCtx.getImageData(0, 0, paintCanvas.width, paintCanvas.height);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (Math.random() - 0.5) * 22;
+      d[i]   = Math.max(0, Math.min(255, d[i]   + n));
+      d[i+1] = Math.max(0, Math.min(255, d[i+1] + n));
+      d[i+2] = Math.max(0, Math.min(255, d[i+2] + n));
     }
+    paintCtx.putImageData(imgData, 0, 0);
+  }
+
+  function paintDot(x, y) {
+    const { r, g, b } = mixPaints();
+    const size = +document.getElementById('brush-size').value;
+    const s = size * (0.82 + Math.random() * 0.36);
+    const grad = paintCtx.createRadialGradient(x, y, 0, x, y, s);
+    grad.addColorStop(0,    `rgba(${r},${g},${b},0.90)`);
+    grad.addColorStop(0.42, `rgba(${r},${g},${b},0.55)`);
+    grad.addColorStop(1,    `rgba(${r},${g},${b},0)`);
+    paintCtx.fillStyle = grad;
+    paintCtx.beginPath();
+    paintCtx.arc(x, y, s, 0, Math.PI * 2);
+    paintCtx.fill();
+  }
+
+  function paintStroke(x1, y1, x2, y2) {
+    const size = +document.getElementById('brush-size').value;
+    const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    const steps = Math.max(1, Math.ceil(dist / (size * 0.35)));
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      paintDot(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t);
+    }
+  }
+
+  function getCanvasPos(e) {
+    const rect = paintCanvas.getBoundingClientRect();
+    const sx = paintCanvas.width / rect.width;
+    const sy = paintCanvas.height / rect.height;
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - rect.left) * sx, y: (src.clientY - rect.top) * sy };
+  }
+
+  paintCanvas.addEventListener('mousedown', e => {
+    isPainting = true;
+    const { x, y } = getCanvasPos(e);
+    lastPX = x; lastPY = y;
+    paintDot(x, y);
   });
 
-  document.getElementById('hex-input').addEventListener('blur', () => {
-    // Normalize hex field on blur
-    const r = +document.getElementById('r-slider').value;
-    const g = +document.getElementById('g-slider').value;
-    const b = +document.getElementById('b-slider').value;
-    document.getElementById('hex-input').value = rgbToHex(r, g, b);
+  paintCanvas.addEventListener('mousemove', e => {
+    if (!isPainting) return;
+    const { x, y } = getCanvasPos(e);
+    paintStroke(lastPX, lastPY, x, y);
+    lastPX = x; lastPY = y;
   });
+
+  paintCanvas.addEventListener('mouseup',    () => { isPainting = false; });
+  paintCanvas.addEventListener('mouseleave', () => { isPainting = false; });
+
+  paintCanvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    isPainting = true;
+    const { x, y } = getCanvasPos(e);
+    lastPX = x; lastPY = y;
+    paintDot(x, y);
+  }, { passive: false });
+
+  paintCanvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!isPainting) return;
+    const { x, y } = getCanvasPos(e);
+    paintStroke(lastPX, lastPY, x, y);
+    lastPX = x; lastPY = y;
+  }, { passive: false });
+
+  paintCanvas.addEventListener('touchend', () => { isPainting = false; });
+
+  document.getElementById('brush-size').addEventListener('input', function () {
+    document.getElementById('brush-size-val').textContent = this.value;
+  });
+
+  document.getElementById('clear-canvas-btn').addEventListener('click', drawPaperTexture);
 
   // ── Paint Brush Mixer ───────────────────────────────────────
 
@@ -1084,15 +1108,12 @@
     const hex = rgbToHex(r, g, b);
     document.getElementById('mix-preview').style.background = hex;
     document.getElementById('mix-hex').textContent = hex;
+    document.getElementById('brush-indicator').style.background = hex;
+    update(r, g, b);
   }
 
   brushDefs.forEach(brush => {
     document.getElementById('brush-' + brush.id).addEventListener('input', updatePaintMixer);
-  });
-
-  document.getElementById('mix-load-btn').addEventListener('click', () => {
-    const { r, g, b } = mixPaints();
-    update(r, g, b);
   });
 
   document.getElementById('mix-reset-btn').addEventListener('click', () => {
@@ -1104,12 +1125,13 @@
     });
     document.getElementById('mix-preview').style.background = '#ffffff';
     document.getElementById('mix-hex').textContent = '#ffffff';
+    document.getElementById('brush-indicator').style.background = '#ffffff';
+    update(255, 255, 255);
   });
 
-  updatePaintMixer();
-
   // ── Init ────────────────────────────────────────────────────
-  update(128, 0, 200);
+  drawPaperTexture();
+  updatePaintMixer();
 </script>
 </body>
 </html>
