@@ -378,10 +378,158 @@
 
     @media (max-width: 640px) {
       .layout { grid-template-columns: 1fr; }
-      .contrast-section, .palettes { grid-column: 1; }
+      .contrast-section, .palettes, .paint-mixer { grid-column: 1; }
       .palette-grid { grid-template-columns: 1fr; }
       .contrast-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── Paint Brush Mixer ── */
+    .paint-mixer {
+      grid-column: 1 / -1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .paint-mixer > h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .paint-subtitle {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .brush-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .brush-item {
+      display: grid;
+      grid-template-columns: 22px 58px 1fr 32px;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brush-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .brush-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .brush-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      background: #333;
+    }
+
+    .brush-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #555;
+      cursor: pointer;
+    }
+
+    .brush-slider::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #555;
+      cursor: pointer;
+    }
+
+    .brush-amount {
+      font-size: 0.78rem;
+      font-family: monospace;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .mix-result {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .mix-preview {
+      width: 88px;
+      height: 64px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      background: #ffffff;
+      transition: background 0.08s;
+    }
+
+    .mix-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .mix-hex {
+      font-family: monospace;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+    }
+
+    .mix-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .mix-load-btn {
+      background: #1a3a2a;
+      border: 1px solid #2e6644;
+      color: #5fcf8a;
+      border-radius: 6px;
+      padding: 0.38rem 0.9rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .mix-load-btn:hover { background: #204a34; }
+
+    .mix-reset-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 0.38rem 0.9rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .mix-reset-btn:hover { background: var(--surface2); }
   </style>
 </head>
 <body>
@@ -526,6 +674,60 @@
       <div class="palette-section">
         <h3>Monochromatic</h3>
         <div class="swatches" id="pal-mono"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paint Brush Mixer -->
+  <div class="paint-mixer">
+    <h2>Paint Brush Mixer</h2>
+    <p class="paint-subtitle">Dip each brush and blend — amounts mix like real pigment</p>
+    <div class="brush-list">
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#ff3333"></div>
+        <span class="brush-label">Red</span>
+        <input type="range" class="brush-slider" id="brush-red" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-red">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#22cc55"></div>
+        <span class="brush-label">Green</span>
+        <input type="range" class="brush-slider" id="brush-green" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-green">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#3388ff"></div>
+        <span class="brush-label">Blue</span>
+        <input type="range" class="brush-slider" id="brush-blue" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-blue">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#111111; border:1px solid #444"></div>
+        <span class="brush-label">Black</span>
+        <input type="range" class="brush-slider" id="brush-black" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-black">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#ffffff; border:1px solid #444"></div>
+        <span class="brush-label">White</span>
+        <input type="range" class="brush-slider" id="brush-white" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-white">0</span>
+      </div>
+
+    </div>
+    <div class="mix-result">
+      <div class="mix-preview" id="mix-preview"></div>
+      <div class="mix-info">
+        <span class="mix-hex" id="mix-hex">#ffffff</span>
+        <div class="mix-buttons">
+          <button class="mix-load-btn" id="mix-load-btn">Load into Mixer →</button>
+          <button class="mix-reset-btn" id="mix-reset-btn">Reset</button>
+        </div>
       </div>
     </div>
   </div>
@@ -842,6 +1044,69 @@
     const b = +document.getElementById('b-slider').value;
     document.getElementById('hex-input').value = rgbToHex(r, g, b);
   });
+
+  // ── Paint Brush Mixer ───────────────────────────────────────
+
+  const brushDefs = [
+    { id: 'red',   rgb: [255, 0,   0  ], trackColor: '#ff3333' },
+    { id: 'green', rgb: [0,   255, 0  ], trackColor: '#22cc55' },
+    { id: 'blue',  rgb: [0,   0,   255], trackColor: '#3388ff' },
+    { id: 'black', rgb: [0,   0,   0  ], trackColor: '#666666' },
+    { id: 'white', rgb: [255, 255, 255], trackColor: '#bbbbbb' },
+  ];
+
+  function mixPaints() {
+    let total = 0, r = 0, g = 0, b = 0;
+    brushDefs.forEach(brush => {
+      const amt = +document.getElementById('brush-' + brush.id).value;
+      total += amt;
+      r += brush.rgb[0] * amt;
+      g += brush.rgb[1] * amt;
+      b += brush.rgb[2] * amt;
+    });
+    if (total === 0) return { r: 255, g: 255, b: 255 };
+    return {
+      r: Math.round(r / total),
+      g: Math.round(g / total),
+      b: Math.round(b / total),
+    };
+  }
+
+  function updatePaintMixer() {
+    brushDefs.forEach(brush => {
+      const slider = document.getElementById('brush-' + brush.id);
+      const amt = +slider.value;
+      document.getElementById('amt-' + brush.id).textContent = amt;
+      slider.style.background =
+        `linear-gradient(to right, ${brush.trackColor} 0%, ${brush.trackColor} ${amt}%, #333 ${amt}%, #333 100%)`;
+    });
+    const { r, g, b } = mixPaints();
+    const hex = rgbToHex(r, g, b);
+    document.getElementById('mix-preview').style.background = hex;
+    document.getElementById('mix-hex').textContent = hex;
+  }
+
+  brushDefs.forEach(brush => {
+    document.getElementById('brush-' + brush.id).addEventListener('input', updatePaintMixer);
+  });
+
+  document.getElementById('mix-load-btn').addEventListener('click', () => {
+    const { r, g, b } = mixPaints();
+    update(r, g, b);
+  });
+
+  document.getElementById('mix-reset-btn').addEventListener('click', () => {
+    brushDefs.forEach(brush => {
+      const slider = document.getElementById('brush-' + brush.id);
+      slider.value = 0;
+      slider.style.background = '#333';
+      document.getElementById('amt-' + brush.id).textContent = '0';
+    });
+    document.getElementById('mix-preview').style.background = '#ffffff';
+    document.getElementById('mix-hex').textContent = '#ffffff';
+  });
+
+  updatePaintMixer();
 
   // ── Init ────────────────────────────────────────────────────
   update(128, 0, 200);
