@@ -603,6 +603,59 @@
     </div>
   </div>
 
+  <!-- Paint Brush Mixer -->
+  <div class="paint-mixer">
+    <h2>Paint Brush Mixer</h2>
+    <p class="paint-subtitle">Dip each brush and blend — amounts mix like real pigment</p>
+    <div class="brush-list">
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#ff3333"></div>
+        <span class="brush-label">Red</span>
+        <input type="range" class="brush-slider" id="brush-red" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-red">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#22cc55"></div>
+        <span class="brush-label">Green</span>
+        <input type="range" class="brush-slider" id="brush-green" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-green">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#3388ff"></div>
+        <span class="brush-label">Blue</span>
+        <input type="range" class="brush-slider" id="brush-blue" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-blue">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#111111; border:1px solid #444"></div>
+        <span class="brush-label">Black</span>
+        <input type="range" class="brush-slider" id="brush-black" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-black">0</span>
+      </div>
+
+      <div class="brush-item">
+        <div class="brush-swatch" style="background:#ffffff; border:1px solid #444"></div>
+        <span class="brush-label">White</span>
+        <input type="range" class="brush-slider" id="brush-white" min="0" max="100" value="0">
+        <span class="brush-amount" id="amt-white">0</span>
+      </div>
+
+    </div>
+    <div class="mix-result">
+      <div class="mix-preview" id="mix-preview"></div>
+      <div class="mix-info">
+        <span class="mix-hex" id="mix-hex">#ffffff</span>
+        <div class="mix-buttons">
+          <button class="mix-reset-btn" id="mix-reset-btn">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Contrast checker for active color -->
   <div class="contrast-section">
     <h2>Active Color — Contrast Check</h2>
@@ -653,59 +706,6 @@
       <div class="palette-section">
         <h3>Monochromatic</h3>
         <div class="swatches" id="pal-mono"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Paint Brush Mixer -->
-  <div class="paint-mixer">
-    <h2>Paint Brush Mixer</h2>
-    <p class="paint-subtitle">Dip each brush and blend — amounts mix like real pigment</p>
-    <div class="brush-list">
-
-      <div class="brush-item">
-        <div class="brush-swatch" style="background:#ff3333"></div>
-        <span class="brush-label">Red</span>
-        <input type="range" class="brush-slider" id="brush-red" min="0" max="100" value="0">
-        <span class="brush-amount" id="amt-red">0</span>
-      </div>
-
-      <div class="brush-item">
-        <div class="brush-swatch" style="background:#22cc55"></div>
-        <span class="brush-label">Green</span>
-        <input type="range" class="brush-slider" id="brush-green" min="0" max="100" value="0">
-        <span class="brush-amount" id="amt-green">0</span>
-      </div>
-
-      <div class="brush-item">
-        <div class="brush-swatch" style="background:#3388ff"></div>
-        <span class="brush-label">Blue</span>
-        <input type="range" class="brush-slider" id="brush-blue" min="0" max="100" value="0">
-        <span class="brush-amount" id="amt-blue">0</span>
-      </div>
-
-      <div class="brush-item">
-        <div class="brush-swatch" style="background:#111111; border:1px solid #444"></div>
-        <span class="brush-label">Black</span>
-        <input type="range" class="brush-slider" id="brush-black" min="0" max="100" value="0">
-        <span class="brush-amount" id="amt-black">0</span>
-      </div>
-
-      <div class="brush-item">
-        <div class="brush-swatch" style="background:#ffffff; border:1px solid #444"></div>
-        <span class="brush-label">White</span>
-        <input type="range" class="brush-slider" id="brush-white" min="0" max="100" value="0">
-        <span class="brush-amount" id="amt-white">0</span>
-      </div>
-
-    </div>
-    <div class="mix-result">
-      <div class="mix-preview" id="mix-preview"></div>
-      <div class="mix-info">
-        <span class="mix-hex" id="mix-hex">#ffffff</span>
-        <div class="mix-buttons">
-          <button class="mix-reset-btn" id="mix-reset-btn">Reset</button>
-        </div>
       </div>
     </div>
   </div>
