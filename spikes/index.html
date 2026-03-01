@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spike Jumper</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d0d1a; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ─── Canvas ───────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const BASE_W = 800, BASE_H = 300;
+let scale = 1;
+function resize() {
+  scale = Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H);
+  canvas.width = BASE_W * scale;
+  canvas.height = BASE_H * scale;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// roundRect polyfill for older browsers
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    const rad = Array.isArray(r) ? r[0] : (r || 0);
+    this.moveTo(x + rad, y);
+    this.lineTo(x + w - rad, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + rad);
+    this.lineTo(x + w, y + h - rad);
+    this.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+    this.lineTo(x + rad, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - rad);
+    this.lineTo(x, y + rad);
+    this.quadraticCurveTo(x, y, x + rad, y);
+    this.closePath();
+    return this;
+  };
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const GROUND_Y   = BASE_H - 44;
+const GRAVITY    = 1800;
+const JUMP_VY    = -620;
+const BASE_SPEED = 220;
+const SPEED_CAP  = BASE_SPEED * 3;
+const SPEED_STEP = 0.05;
+const CHUNK_SIZE = 600;
+const SQ_W = 30, SQ_H = 30;
+
+// ─── Game state ───────────────────────────────────────────────────────────────
+let state, score, highScore;
+let distanceTraveled, gemsCollected, spikesDodged, gameTime;
+let bgTime = 0; // never resets — drives the theme cycle
+
+// ─── Theme system ─────────────────────────────────────────────────────────────
+// Period: 128s → 56s pure forest, 8s crossfade, 56s pure space, 8s crossfade
+function getThemeBlend() {
+  const t = bgTime % 128;
+  if (t < 56)  return 0;
+  if (t < 64)  return (t - 56) / 8;
+  if (t < 120) return 1;
+  return 1 - (t - 120) / 8;
+}
+
+function lerpC([r1,g1,b1], [r2,g2,b2], t) {
+  return [r1+(r2-r1)*t|0, g1+(g2-g1)*t|0, b1+(b2-b1)*t|0];
+}
+function rgb([r,g,b]) { return `rgb(${r},${g},${b})`; }
+
+// Forest palette
+const F = { skyTop: [4, 16, 5], skyBot: [12, 30, 10], gndFill: [20, 40, 8], gndEdge: [52, 92, 20] };
+// Space palette
+const S = { skyTop: [0, 0, 6], skyBot: [4, 0, 14], gndFill: [14, 14, 30], gndEdge: [60, 60, 125] };
+
+// ─── Background element data ──────────────────────────────────────────────────
+let farTrees = [], nearTrees = [], stars = [], planet = null;
+
+function initBgElements() {
+  farTrees = [];
+  for (let i = 0; i < 9; i++)
+    farTrees.push({ x: Math.random() * 700, h: 55 + Math.random() * 45, w: 17 + Math.random() * 13 });
+
+  nearTrees = [];
+  for (let i = 0; i < 6; i++)
+    nearTrees.push({ x: Math.random() * 500, h: 100 + Math.random() * 65, w: 26 + Math.random() * 18 });
+
+  stars = [];
+  for (let i = 0; i < 90; i++)
+    stars.push({
+      x: Math.random() * 820,
+      y: 5 + Math.random() * (GROUND_Y - 10),
+      r: 0.4 + Math.random() * 1.8,
+      bright: Math.random() > 0.82,
+      phase: Math.random() * Math.PI * 2,
+    });
+
+  planet = { x: 630, y: 54, r: 36 };
+}
+
+function drawPineTree(sx, h, w, brightOffset) {
+  const base = GROUND_Y;
+  // 3 stacked triangle tiers
+  for (let tier = 0; tier < 3; tier++) {
+    const frac = tier / 2;
+    const tierBase = base - h * 0.18 - h * 0.48 * frac;
+    const tierTop  = tierBase - h * 0.44 * (1 - frac * 0.45);
+    const tierW    = w * (1 - frac * 0.22);
+    const v = 5 + brightOffset + tier * 4;
+    ctx.fillStyle = `rgb(${v}, ${v * 2 + 3}, ${v - 2})`;
+    ctx.beginPath();
+    ctx.moveTo(sx, tierTop);
+    ctx.lineTo(sx + tierW, tierBase);
+    ctx.lineTo(sx - tierW, tierBase);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // trunk
+  ctx.fillStyle = `rgb(${10 + brightOffset}, ${8 + brightOffset}, 4)`;
+  ctx.fillRect(sx - 3, base - 16, 6, 16);
+}
+
+function scrollX(worldOffset, period) {
+  const scrolled = (state === 'playing' || state === 'dead') ? camX * worldOffset : 0;
+  return scrolled % period;
+}
+
+function drawBg() {
+  const b = getThemeBlend();
+
+  // ── Sky gradient (lerped between forest and space) ─────────────────────────
+  const skyTop = lerpC(F.skyTop, S.skyTop, b);
+  const skyBot = lerpC(F.skyBot, S.skyBot, b);
+  const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  grad.addColorStop(0, rgb(skyTop));
+  grad.addColorStop(1, rgb(skyBot));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, BASE_W, GROUND_Y);
+
+  // ── Space elements (fade in with b) ───────────────────────────────────────
+  if (b > 0.02) {
+    const sa = b;
+
+    // Nebula glow blobs
+    const nb1 = ctx.createRadialGradient(190, 75, 8, 190, 75, 130);
+    nb1.addColorStop(0, `rgba(90,20,130,${0.13 * sa})`);
+    nb1.addColorStop(1, 'transparent');
+    ctx.fillStyle = nb1;
+    ctx.fillRect(0, 0, BASE_W, GROUND_Y);
+
+    const nb2 = ctx.createRadialGradient(600, 35, 5, 600, 35, 95);
+    nb2.addColorStop(0, `rgba(20,45,130,${0.11 * sa})`);
+    nb2.addColorStop(1, 'transparent');
+    ctx.fillStyle = nb2;
+    ctx.fillRect(0, 0, BASE_W, GROUND_Y);
+
+    // Ringed planet (slow parallax)
+    const pOff = (state === 'playing' || state === 'dead') ? (camX * 0.035) % (BASE_W + planet.r * 2) : 0;
+    const px = ((planet.x - pOff) % (BASE_W + planet.r * 2) + BASE_W + planet.r * 2) % (BASE_W + planet.r * 2) - planet.r;
+    const py = planet.y;
+    const pr = planet.r;
+
+    // Planet body
+    const pGrad = ctx.createRadialGradient(px - pr * 0.22, py - pr * 0.28, pr * 0.08, px, py, pr);
+    pGrad.addColorStop(0, `rgba(170,100,210,${sa})`);
+    pGrad.addColorStop(0.55, `rgba(95,50,150,${sa})`);
+    pGrad.addColorStop(1, `rgba(38,18,78,${sa * 0.6})`);
+    ctx.beginPath();
+    ctx.arc(px, py, pr, 0, Math.PI * 2);
+    ctx.fillStyle = pGrad;
+    ctx.fill();
+
+    // Ring (behind-planet half hidden by clipping)
+    ctx.save();
+    ctx.strokeStyle = `rgba(190,140,230,${0.38 * sa})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(px, py, pr * 1.7, pr * 0.38, -0.18, 0, Math.PI * 2);
+    ctx.stroke();
+    // Mask the front-half of ring that passes behind the planet
+    ctx.beginPath();
+    ctx.arc(px, py, pr - 1, 0, Math.PI * 2);
+    ctx.fillStyle = pGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // Stars (subtle parallax)
+    const starOff = (state === 'playing' || state === 'dead') ? camX * 0.055 : 0;
+    for (const st of stars) {
+      const sx = ((st.x - starOff % 820) + 820) % 820;
+      const twinkle = st.bright ? 0.45 + Math.sin(Date.now() / 350 + st.phase) * 0.55 : 1;
+      ctx.globalAlpha = sa * twinkle * (st.bright ? 0.95 : 0.5);
+      ctx.fillStyle = st.bright ? '#ffffff' : '#ccd0ff';
+      ctx.beginPath();
+      ctx.arc(sx, st.y, st.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Forest elements (fade out with b) ─────────────────────────────────────
+  if (b < 0.98) {
+    const fa = 1 - b;
+
+    // Moon
+    ctx.globalAlpha = fa * 0.65;
+    ctx.fillStyle = '#e8e8c4';
+    ctx.beginPath();
+    ctx.arc(672, 42, 18, 0, Math.PI * 2);
+    ctx.fill();
+    // crescent shadow (same color as sky at that point)
+    const moonSkyC = lerpC(F.skyTop, F.skyBot, 42 / GROUND_Y);
+    ctx.fillStyle = rgb(moonSkyC);
+    ctx.beginPath();
+    ctx.arc(679, 38, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Far trees (very slow parallax)
+    const farOff = scrollX(0.07, 700);
+    ctx.globalAlpha = fa * 0.72;
+    for (const t of farTrees) {
+      let sx = ((t.x - farOff + 700) % 700);
+      while (sx < BASE_W + t.w + 10) {
+        drawPineTree(sx, t.h, t.w, 0);
+        sx += 700;
+      }
+    }
+
+    // Near trees (medium parallax)
+    const nearOff = scrollX(0.2, 500);
+    ctx.globalAlpha = fa * 0.88;
+    for (const t of nearTrees) {
+      let sx = ((t.x - nearOff + 500) % 500);
+      while (sx < BASE_W + t.w + 10) {
+        drawPineTree(sx, t.h, t.w, 8);
+        sx += 500;
+      }
+    }
+
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawGround() {
+  const b = getThemeBlend();
+  const gFill = lerpC(F.gndFill, S.gndFill, b);
+  const gEdge = lerpC(F.gndEdge, S.gndEdge, b);
+  const gDark = lerpC(gFill, [0,0,0], 0.55);
+
+  const grad = ctx.createLinearGradient(0, GROUND_Y, 0, BASE_H);
+  grad.addColorStop(0, rgb(gFill));
+  grad.addColorStop(1, rgb(gDark));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, GROUND_Y, BASE_W, BASE_H - GROUND_Y);
+  ctx.fillStyle = rgb(gEdge);
+  ctx.fillRect(0, GROUND_Y, BASE_W, 2);
+  ctx.fillStyle = `rgba(${gEdge[0]},${gEdge[1]},${gEdge[2]},0.28)`;
+  ctx.fillRect(0, GROUND_Y + 2, BASE_W, 1);
+}
+
+// ─── Squirrel drawing ─────────────────────────────────────────────────────────
+// Draws the squirrel facing RIGHT. Origin (0,0) = center of the 30×30 bounding box.
+function drawSquirrelShape() {
+  const ox = -SQ_W / 2;  // = -15
+  const oy = -SQ_H / 2;  // = -15
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // ── Tail ── big fluffy bezier arc rising up and curling over the back ─────
+  // Outer (thick, dark amber)
+  ctx.strokeStyle = '#b86e22';
+  ctx.lineWidth = 11;
+  ctx.beginPath();
+  ctx.moveTo(ox + 6, oy + 27);
+  ctx.bezierCurveTo(ox - 10, oy + 16, ox - 7, oy + 0, ox + 12, oy + 2);
+  ctx.stroke();
+  // Middle layer (medium amber)
+  ctx.strokeStyle = '#d4892f';
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(ox + 6, oy + 27);
+  ctx.bezierCurveTo(ox - 10, oy + 16, ox - 7, oy + 0, ox + 12, oy + 2);
+  ctx.stroke();
+  // Inner highlight (light)
+  ctx.strokeStyle = '#eeaa55';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(ox + 6, oy + 26);
+  ctx.bezierCurveTo(ox - 7, oy + 16, ox - 5, oy + 2, ox + 12, oy + 4);
+  ctx.stroke();
+
+  // ── Body ──────────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#d4892f';
+  ctx.beginPath();
+  ctx.roundRect(ox + 2, oy + 14, 24, 14, [3, 8, 5, 3]);
+  ctx.fill();
+
+  // Belly patch
+  ctx.fillStyle = '#f5d49a';
+  ctx.beginPath();
+  ctx.ellipse(ox + 13, oy + 21, 7, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Back leg ──────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#c07828';
+  ctx.beginPath();
+  ctx.roundRect(ox + 4, oy + 25, 9, 7, 3);
+  ctx.fill();
+  ctx.fillStyle = '#9a6020';
+  ctx.fillRect(ox + 4, oy + 30, 9, 2);
+
+  // ── Head ──────────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#d4892f';
+  ctx.beginPath();
+  ctx.arc(ox + 22, oy + 12, 9.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cheek / snout (elongated forward)
+  ctx.fillStyle = '#e09035';
+  ctx.beginPath();
+  ctx.ellipse(ox + 28, oy + 14, 5.5, 3.8, 0.25, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Front leg ─────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#c07828';
+  ctx.beginPath();
+  ctx.roundRect(ox + 18, oy + 25, 8, 7, 3);
+  ctx.fill();
+  ctx.fillStyle = '#9a6020';
+  ctx.fillRect(ox + 18, oy + 30, 8, 2);
+
+  // ── Ear ───────────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#c07828';
+  ctx.beginPath();
+  ctx.moveTo(ox + 16, oy + 5);
+  ctx.lineTo(ox + 25, oy + 5);
+  ctx.lineTo(ox + 20, oy - 3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner ear (pink)
+  ctx.fillStyle = '#d47080';
+  ctx.beginPath();
+  ctx.moveTo(ox + 17.5, oy + 5);
+  ctx.lineTo(ox + 23.5, oy + 5);
+  ctx.lineTo(ox + 20.5, oy + 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // ── Eye ───────────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#18182a';
+  ctx.beginPath();
+  ctx.arc(ox + 26, oy + 10, 2.8, 0, Math.PI * 2);
+  ctx.fill();
+  // Catchlight
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath();
+  ctx.arc(ox + 27.1, oy + 8.9, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Nose ──────────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#4a2008';
+  ctx.beginPath();
+  ctx.arc(ox + 32.5, oy + 13, 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Whisker lines
+  ctx.strokeStyle = 'rgba(255,230,180,0.5)';
+  ctx.lineWidth = 0.8;
+  ctx.lineCap = 'round';
+  for (const [dx, dy] of [[-4, -1], [-4, 1], [-4, 2.5]]) {
+    ctx.beginPath();
+    ctx.moveTo(ox + 31, oy + 13);
+    ctx.lineTo(ox + 31 + dx * 2.5, oy + 13 + dy * 2);
+    ctx.stroke();
+  }
+}
+
+const sq = {
+  x: 120, y: 0, vy: 0, jumps: 0, onGround: false, dead: false, deathTimer: 0,
+
+  reset() {
+    this.x = 120; this.y = GROUND_Y - SQ_H;
+    this.vy = 0; this.jumps = 0; this.onGround = true;
+    this.dead = false; this.deathTimer = 0;
+  },
+
+  jump() {
+    if (this.dead || this.jumps >= 2) return;
+    this.vy = JUMP_VY; this.jumps++; this.onGround = false;
+  },
+
+  update(dt) {
+    if (this.dead) {
+      this.deathTimer += dt;
+      this.vy += GRAVITY * dt;
+      this.y += this.vy * dt;
+      return;
+    }
+    this.vy += GRAVITY * dt;
+    this.y += this.vy * dt;
+    if (this.y + SQ_H >= GROUND_Y) {
+      this.y = GROUND_Y - SQ_H; this.vy = 0; this.onGround = true; this.jumps = 0;
+    } else {
+      this.onGround = false;
+    }
+    if (this.y < 0) { this.y = 0; this.vy = 0; }
+  },
+
+  aabb() {
+    const i = 5;
+    return { x: this.x + i, y: this.y + i, w: SQ_W - i * 2, h: SQ_H - i * 2 };
+  },
+
+  draw() {
+    const cx = this.x + SQ_W / 2;
+    const cy = this.y + SQ_H / 2;
+    const bob = this.onGround ? Math.sin(Date.now() / 110) * 1.8 : 0;
+
+    let scX = 1, scY = 1;
+    if (!this.onGround && !this.dead) {
+      if (this.jumps === 1) { scX = 0.87; scY = 1.15; }
+      if (this.jumps === 2) { scX = 1.13; scY = 0.87; }
+    }
+
+    const angle = this.dead ? this.deathTimer * Math.PI * 4 : 0;
+
+    ctx.save();
+    ctx.translate(cx, cy + bob);
+    ctx.rotate(angle);
+    ctx.scale(scX, scY);
+    if (this.dead && Math.floor(this.deathTimer * 10) % 2 === 0) ctx.globalAlpha = 0.4;
+    drawSquirrelShape();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  },
+};
+
+// ─── World ────────────────────────────────────────────────────────────────────
+let camX = 0, spikes = [], gems = [], nextChunkX = 0;
+
+function currentSpeed() {
+  return Math.min(BASE_SPEED * (1 + SPEED_STEP * Math.floor(gameTime / 10)), SPEED_CAP);
+}
+
+function generateChunk(worldX) {
+  const d = Math.min(gameTime / 60, 1);
+  let x = worldX + 80;
+  const end = worldX + CHUNK_SIZE;
+  while (x < end - 80) {
+    const n = d > 0.3 ? Math.floor(Math.random() * 3) + 1 : Math.floor(Math.random() * 2) + 1;
+    for (let i = 0; i < n && x < end - 40; i++) {
+      const h = 20 + Math.random() * 16, w = 18 + Math.random() * 10;
+      const ceil = d > 0.15 && Math.random() < 0.25;
+      spikes.push({ wx: x, wy: ceil ? 0 : GROUND_Y, w, h, onCeiling: ceil, passed: false });
+      x += w + 4 + Math.random() * 6;
+    }
+    x += (180 - d * 60) + Math.random() * (160 - d * 20);
+  }
+  const gc = 2 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < gc; i++)
+    gems.push({ wx: worldX + 60 + Math.random() * (CHUNK_SIZE - 120), wy: GROUND_Y - 45 - Math.random() * 80, r: 7, collected: false });
+  nextChunkX = worldX + CHUNK_SIZE;
+}
+
+function resetWorld() {
+  spikes = []; gems = []; camX = 0; nextChunkX = 400;
+  generateChunk(nextChunkX);
+}
+
+function updateWorld(dt) {
+  camX += currentSpeed() * dt;
+  while (nextChunkX < camX + BASE_W + CHUNK_SIZE) generateChunk(nextChunkX);
+  spikes = spikes.filter(s => s.wx > camX - 100);
+  gems   = gems.filter(g => g.wx > camX - 100);
+  const sqR = sq.x + SQ_W + camX;
+  for (const sp of spikes)
+    if (!sp.passed && sp.wx + sp.w < sqR) { sp.passed = true; spikesDodged++; score += 5; }
+}
+
+function checkCollisions() {
+  const sa = sq.aabb();
+  for (const sp of spikes) {
+    if (sp.passed) continue;
+    if (sp.wx - camX > BASE_W + 50) break;
+    const sx = sp.wx - camX;
+    if (aabbOvlp(sa, { x: sx + 3, y: sp.wy - sp.h + 3, w: sp.w - 6, h: sp.h - 3 })) { killSquirrel(); return; }
+  }
+  for (const g of gems)
+    if (!g.collected && circleAABB(g.wx - camX, g.wy, g.r, sa)) { g.collected = true; gemsCollected++; score += 10; }
+}
+
+function aabbOvlp(a, b) {
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+function circleAABB(cx, cy, cr, box) {
+  const nx = Math.max(box.x, Math.min(cx, box.x+box.w));
+  const ny = Math.max(box.y, Math.min(cy, box.y+box.h));
+  return (cx-nx)**2 + (cy-ny)**2 < cr*cr;
+}
+
+function killSquirrel() {
+  sq.dead = true; sq.vy = -380; state = 'dead';
+  if (score > highScore) { highScore = score; localStorage.setItem('sj_hi', highScore); }
+}
+
+// ─── Spikes & gems rendering ──────────────────────────────────────────────────
+function drawSpikes() {
+  ctx.shadowColor = 'rgba(255,80,80,0.5)';
+  ctx.shadowBlur = 8;
+  for (const sp of spikes) {
+    const sx = sp.wx - camX;
+    if (sx > BASE_W + 60 || sx + sp.w < -60) continue;
+    let g;
+    if (sp.onCeiling) g = ctx.createLinearGradient(sx+sp.w/2, 0, sx+sp.w/2, sp.h);
+    else              g = ctx.createLinearGradient(sx+sp.w/2, sp.wy-sp.h, sx+sp.w/2, sp.wy);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(1, '#9999bb');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    if (sp.onCeiling) { ctx.moveTo(sx,0); ctx.lineTo(sx+sp.w,0); ctx.lineTo(sx+sp.w/2,sp.h); }
+    else              { ctx.moveTo(sx,sp.wy); ctx.lineTo(sx+sp.w,sp.wy); ctx.lineTo(sx+sp.w/2,sp.wy-sp.h); }
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawGems() {
+  for (const g of gems) {
+    if (g.collected) continue;
+    const gx = g.wx - camX;
+    if (gx > BASE_W + 30 || gx < -30) continue;
+    const r = g.r * (1 + Math.sin(Date.now() / 290 + g.wx * 0.01) * 0.12);
+    ctx.shadowColor = '#00e5cc'; ctx.shadowBlur = 10;
+    ctx.fillStyle = '#00e5cc';
+    ctx.beginPath();
+    ctx.moveTo(gx, g.wy - r);
+    ctx.lineTo(gx + r*0.65, g.wy - r*0.2);
+    ctx.lineTo(gx + r*0.65, g.wy + r*0.1);
+    ctx.lineTo(gx, g.wy + r*0.6);
+    ctx.lineTo(gx - r*0.65, g.wy + r*0.1);
+    ctx.lineTo(gx - r*0.65, g.wy - r*0.2);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.moveTo(gx, g.wy - r); ctx.lineTo(gx + r*0.3, g.wy - r*0.2); ctx.lineTo(gx, g.wy - r*0.1);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+// ─── HUD ──────────────────────────────────────────────────────────────────────
+function fillRR(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); }
+
+function drawHUD() {
+  ctx.textBaseline = 'middle';
+
+  // Score
+  ctx.fillStyle = 'rgba(0,0,0,0.48)'; fillRR(8, 8, 130, 26, 13);
+  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(180,180,220,0.7)'; ctx.textAlign = 'left';
+  ctx.fillText('SCORE', 18, 18);
+  ctx.font = 'bold 14px system-ui'; ctx.fillStyle = '#fff';
+  ctx.fillText(Math.floor(score).toLocaleString(), 64, 21);
+
+  // Best
+  ctx.fillStyle = 'rgba(0,0,0,0.48)'; fillRR(BASE_W - 138, 8, 130, 26, 13);
+  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(180,180,220,0.7)';
+  ctx.fillText('BEST', BASE_W - 128, 18);
+  ctx.font = 'bold 14px system-ui'; ctx.fillStyle = '#ffd700';
+  ctx.fillText(Math.floor(highScore).toLocaleString(), BASE_W - 88, 21);
+
+  // Gems + dodges
+  ctx.fillStyle = 'rgba(0,0,0,0.38)'; fillRR(8, 40, 168, 20, 10);
+  ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#00e5cc'; ctx.fillText(`💎 ${gemsCollected}`, 16, 50);
+  ctx.fillStyle = 'rgba(180,180,220,0.8)'; ctx.fillText(`   ✦ ${spikesDodged} dodged`, 62, 50);
+
+  // Speed bar
+  const frac = Math.max(0, (currentSpeed() - BASE_SPEED) / (SPEED_CAP - BASE_SPEED));
+  const bw = 100;
+  ctx.fillStyle = 'rgba(255,255,255,0.08)'; fillRR(BASE_W/2 - bw/2, BASE_H - 10, bw, 4, 2);
+  ctx.fillStyle = `hsl(${140 - frac * 140}, 80%, 55%)`;
+  fillRR(BASE_W/2 - bw/2, BASE_H - 10, Math.max(4, bw * frac), 4, 2);
+
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ─── Theme transition label ───────────────────────────────────────────────────
+function drawThemeLabel() {
+  const b = getThemeBlend();
+  if (b < 0.03 || b > 0.97) return;
+  // Show label of the incoming theme
+  const goingToSpace = b > 0 && b < 0.5 ? false : b > 0.5;
+  // Simpler: what's dominant right now
+  const label = b >= 0.5 ? '🚀 Space' : '🌲 Forest';
+  const rawAlpha = b < 0.5 ? b * 2 : (1 - b) * 2;
+  const a = Math.min(rawAlpha * 1.4, 0.9);
+  ctx.globalAlpha = a;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'; fillRR(BASE_W/2 - 52, BASE_H - 30, 104, 20, 10);
+  ctx.font = '12px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(label, BASE_W/2, BASE_H - 20);
+  ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
+}
+
+// ─── Title screen ─────────────────────────────────────────────────────────────
+function drawTitleScreen() {
+  ctx.fillStyle = 'rgba(6,6,18,0.80)';
+  ctx.fillRect(0, 0, BASE_W, BASE_H);
+  const cx = BASE_W / 2, cy = BASE_H / 2;
+
+  // Large squirrel bouncing
+  const bounce = Math.sin(Date.now() / 480) * 7;
+  ctx.save();
+  ctx.translate(cx, cy - 48 + bounce);
+  ctx.scale(1.85, 1.85);
+  drawSquirrelShape();
+  ctx.restore();
+
+  // Title
+  ctx.font = 'bold 34px system-ui'; ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.letterSpacing = '3px';
+  ctx.fillText('SPIKE JUMPER', cx, cy + 18);
+  ctx.letterSpacing = '0px';
+
+  // Pulsing prompt
+  ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 580) * 0.5;
+  ctx.font = '13px system-ui'; ctx.fillStyle = '#aaaadd';
+  ctx.fillText('Press  Space  or  Tap  to  Start', cx, cy + 40);
+  ctx.globalAlpha = 1;
+
+  if (highScore > 0) {
+    ctx.fillStyle = 'rgba(255,215,0,0.14)'; fillRR(cx - 72, cy + 50, 144, 22, 11);
+    ctx.font = '12px system-ui'; ctx.fillStyle = '#ffd700';
+    ctx.fillText(`🏆  Best: ${Math.floor(highScore).toLocaleString()}`, cx, cy + 63);
+  }
+}
+
+// ─── Game over screen ─────────────────────────────────────────────────────────
+function drawDeadScreen() {
+  if (sq.deathTimer < 0.35) return;
+  ctx.fillStyle = 'rgba(6,6,18,0.83)';
+  ctx.fillRect(0, 0, BASE_W, BASE_H);
+  const cx = BASE_W / 2, cy = BASE_H / 2;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.055)'; fillRR(cx-162, cy-70, 324, 152, 14);
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(cx-162, cy-70, 324, 152, 14); ctx.stroke();
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold 28px system-ui'; ctx.fillStyle = '#ff5566';
+  ctx.fillText('GAME  OVER', cx, cy - 46);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(cx-100, cy-28, 200, 1);
+
+  ctx.font = 'bold 22px system-ui'; ctx.fillStyle = '#fff';
+  ctx.fillText(Math.floor(score).toLocaleString(), cx, cy - 10);
+  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(180,180,220,0.55)';
+  ctx.fillText('SCORE', cx, cy + 8);
+
+  ctx.font = '12px system-ui'; ctx.fillStyle = 'rgba(180,180,220,0.8)';
+  ctx.fillText(`📏 ${Math.floor(distanceTraveled)}m   💎 ${gemsCollected}   ✦ ${spikesDodged}`, cx, cy + 28);
+
+  if (score > 0 && score >= highScore) {
+    ctx.font = 'bold 11px system-ui'; ctx.fillStyle = '#ffd700';
+    ctx.fillText('🏆  NEW BEST!', cx, cy + 48);
+  }
+
+  ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 580) * 0.5;
+  ctx.font = '12px system-ui'; ctx.fillStyle = '#aaaadd';
+  ctx.fillText('Press  Space  or  Tap  to  Play  Again', cx, cy + 68);
+  ctx.globalAlpha = 1;
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ─── Game lifecycle ───────────────────────────────────────────────────────────
+function startGame() {
+  state = 'playing'; score = distanceTraveled = gemsCollected = spikesDodged = gameTime = 0;
+  sq.reset(); resetWorld();
+}
+function init() {
+  highScore = parseFloat(localStorage.getItem('sj_hi') || '0');
+  state = 'title'; score = distanceTraveled = gemsCollected = spikesDodged = gameTime = 0;
+  initBgElements(); sq.reset();
+}
+
+// ─── Input ────────────────────────────────────────────────────────────────────
+function handleJump() {
+  if (state === 'title') startGame();
+  else if (state === 'playing') sq.jump();
+  else if (state === 'dead' && sq.deathTimer > 0.35) startGame();
+}
+document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); handleJump(); } });
+canvas.addEventListener('click', handleJump);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); handleJump(); }, { passive: false });
+
+// ─── Loop ─────────────────────────────────────────────────────────────────────
+let lastTime = null;
+function loop(ts) {
+  if (!lastTime) lastTime = ts;
+  const dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
+  bgTime += dt;
+
+  if (state === 'playing') {
+    gameTime += dt;
+    distanceTraveled += currentSpeed() * dt / 10;
+    score += currentSpeed() * dt / 10;
+    updateWorld(dt); sq.update(dt); checkCollisions();
+  } else if (state === 'dead') {
+    sq.update(dt);
+  }
+
+  drawBg();
+  drawGround();
+  drawSpikes();
+  drawGems();
+  sq.draw();
+
+  if (state === 'playing') { drawHUD(); drawThemeLabel(); }
+  if (state === 'title')   drawTitleScreen();
+  if (state === 'dead')    drawDeadScreen();
+
+  requestAnimationFrame(loop);
+}
+
+init();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
