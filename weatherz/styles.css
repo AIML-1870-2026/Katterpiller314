@@ -1,0 +1,410 @@
+/* ==================== RESET & BASE ==================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  color: #fff;
+  overflow-x: hidden;
+  transition: background 1s ease;
+}
+
+/* ==================== DYNAMIC BACKGROUNDS ==================== */
+body.bg-default  { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+body.bg-clear    { background: linear-gradient(135deg, #f6a623 0%, #f7941d 30%, #1a6bbf 100%); }
+body.bg-clouds   { background: linear-gradient(135deg, #4a5568 0%, #2d3748 50%, #1a202c 100%); }
+body.bg-rain     { background: linear-gradient(135deg, #1a1a4e 0%, #2d2d8e 40%, #1a1a6e 100%); }
+body.bg-snow     { background: linear-gradient(135deg, #a0aec0 0%, #718096 50%, #4a5568 100%); }
+body.bg-thunder  { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 40%, #1a0a2e 100%); }
+body.bg-night    { background: linear-gradient(135deg, #0a0a1a 0%, #16213e 50%, #1a0a2e 100%); }
+body.bg-mist     { background: linear-gradient(135deg, #718096 0%, #4a5568 50%, #2d3748 100%); }
+
+/* ==================== BACKGROUND ORBS ==================== */
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: drift 20s ease-in-out infinite alternate;
+}
+
+.orb-1 {
+  width: 500px; height: 500px;
+  background: rgba(100, 160, 255, 0.5);
+  top: -150px; left: -150px;
+  animation-duration: 22s;
+}
+
+.orb-2 {
+  width: 400px; height: 400px;
+  background: rgba(180, 100, 255, 0.4);
+  bottom: -100px; right: -100px;
+  animation-duration: 28s;
+  animation-delay: -10s;
+}
+
+.orb-3 {
+  width: 300px; height: 300px;
+  background: rgba(100, 220, 200, 0.3);
+  top: 40%; left: 55%;
+  animation-duration: 18s;
+  animation-delay: -5s;
+}
+
+@keyframes drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(40px, -60px) scale(1.05); }
+  66%  { transform: translate(-30px, 30px) scale(0.95); }
+  100% { transform: translate(20px, -20px) scale(1.02); }
+}
+
+/* ==================== LAYOUT ==================== */
+.app-container {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+/* ==================== GLASS CARD ==================== */
+.glass {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== SEARCH ==================== */
+.search-section {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.app-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  color: #fff;
+  padding: 0.4rem 0.5rem;
+}
+
+.search-bar input::placeholder { color: rgba(255,255,255,0.5); }
+
+.search-bar button {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.search-bar button:hover { background: rgba(255,255,255,0.35); }
+
+/* ==================== PRESETS ==================== */
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.preset-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  transition: background 0.2s, transform 0.15s, border-color 0.2s;
+}
+
+.preset-btn:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+}
+
+.preset-btn.active {
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.5);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ==================== ERROR ==================== */
+.error-msg {
+  text-align: center;
+  background: rgba(248, 113, 113, 0.25);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  border-radius: 16px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+}
+
+.hidden { display: none !important; }
+
+/* ==================== CARDS LAYOUT ==================== */
+.weather-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.card { padding: 1.5rem; }
+.card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 1rem;
+}
+
+/* ==================== CURRENT WEATHER ==================== */
+.cw-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.cw-location h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.secondary-text { color: rgba(255,255,255,0.7); }
+
+.cw-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.cw-icon-desc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.cw-icon-desc img { width: 80px; height: 80px; }
+
+.weather-desc {
+  font-size: 0.95rem;
+  text-transform: capitalize;
+  color: rgba(255,255,255,0.85);
+}
+
+.cw-temp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.temperature {
+  font-family: 'Outfit', sans-serif;
+  font-size: 5rem;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.feels-like { font-size: 0.9rem; }
+
+.cw-details {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.55);
+}
+
+.detail-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ==================== UNIT TOGGLE ==================== */
+.unit-toggle {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 20px;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  transition: background 0.2s;
+}
+
+.unit-toggle:hover { background: rgba(255,255,255,0.22); }
+
+.unit-opt { color: rgba(255,255,255,0.5); transition: color 0.2s; }
+.unit-opt.active {
+  color: #fff;
+  background: rgba(255,255,255,0.25);
+  border-radius: 10px;
+  padding: 0.1rem 0.4rem;
+}
+
+.unit-sep { color: rgba(255,255,255,0.35); }
+
+/* ==================== HOURLY FORECAST ==================== */
+.hourly-row {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+.hourly-row::-webkit-scrollbar { height: 4px; }
+.hourly-row::-webkit-scrollbar-track { background: transparent; }
+.hourly-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+.hourly-tile {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  min-width: 70px;
+  transition: transform 0.2s, background 0.2s;
+  cursor: default;
+}
+
+.hourly-tile:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.18);
+}
+
+.hourly-time {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.65);
+}
+
+.hourly-tile img { width: 36px; height: 36px; }
+
+.hourly-temp {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* ==================== AQI ==================== */
+.aqi-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.aqi-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.aqi-sub { font-size: 0.9rem; }
+
+.aqi-pollutants {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pollutant-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  gap: 0.2rem;
+  min-width: 70px;
+}
+
+/* ==================== ANIMATIONS ==================== */
+.anim-slide-up {
+  opacity: 0;
+  animation: slideUp 0.55s ease forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 480px) {
+  .temperature { font-size: 4rem; }
+  .cw-main { gap: 1rem; }
+  .cw-details { flex-wrap: wrap; }
+  .detail-item { min-width: 80px; }
+}
