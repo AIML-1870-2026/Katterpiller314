@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEO Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800&family=Varela+Round&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --ac-sky: #B8E8F7;
+      --ac-dusk: #FFDBB5;
+      --ac-green: #78C97A;
+      --ac-green-dark: #4E9E58;
+      --ac-ocean: #4EB8E0;
+      --ac-ocean-deep: #2A85C0;
+      --ac-sand: #F5DFA0;
+      --ac-snow: #EEF6FF;
+      --ac-moon: #E8E0C8;
+      --ac-ui-bg: #FFFBF0;
+      --ac-ui-border: #D4A96A;
+      --ac-ui-shadow: rgba(180,130,80,0.18);
+      --ac-ui-text: #3D2B1F;
+      --ac-ui-heading: #5C3D1E;
+      --ac-ui-accent: #FF6B6B;
+      --ac-ui-safe: #78C97A;
+      --ac-ui-btn: #FFCC5C;
+      --ac-ui-btn-hover: #FFB830;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Varela Round', sans-serif;
+      background: var(--ac-sky);
+      color: var(--ac-ui-text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── Top Bar ── */
+    #topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 58px;
+      background: var(--ac-ui-bg);
+      border-bottom: 3px solid var(--ac-ui-border);
+      box-shadow: 0 2px 12px var(--ac-ui-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+    }
+
+    #logo {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--ac-ui-heading);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #topbar-center {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #date-picker-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    #date-input {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.88rem;
+      color: var(--ac-ui-text);
+      background: var(--ac-ui-bg);
+      border: 3px solid var(--ac-ui-border);
+      border-radius: 999px;
+      padding: 6px 16px 6px 36px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    #date-input::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; left: 0; width: 100%; cursor: pointer; }
+
+    #cal-emoji {
+      position: absolute;
+      left: 12px;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    /* Hazardous toggle */
+    #haz-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--ac-ui-heading);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .pill-toggle {
+      width: 42px; height: 24px;
+      background: #ddd;
+      border-radius: 999px;
+      border: 2px solid var(--ac-ui-border);
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .pill-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+    .pill-toggle.active {
+      background: var(--ac-ui-accent);
+    }
+    .pill-toggle.active::after {
+      transform: translateX(18px);
+    }
+
+    /* ── Canvas ── */
+    #canvas-wrap {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+    }
+
+    canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ── Count Panel ── */
+    #count-panel {
+      position: fixed;
+      bottom: 18px; left: 18px;
+      background: var(--ac-ui-bg);
+      border: 3px solid var(--ac-ui-border);
+      border-radius: 18px;
+      box-shadow: 0 4px 18px var(--ac-ui-shadow);
+      padding: 14px 20px;
+      z-index: 100;
+      min-width: 170px;
+    }
+
+    #count-panel h2 {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--ac-ui-heading);
+      margin-bottom: 6px;
+    }
+
+    #count-total {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    #count-haz {
+      font-size: 0.9rem;
+      color: var(--ac-ui-accent);
+      font-weight: 600;
+    }
+
+    /* ── Moon label ── */
+    #moon-label {
+      position: fixed;
+      background: var(--ac-ui-bg);
+      border: 2px solid var(--ac-ui-border);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      color: var(--ac-ui-heading);
+      pointer-events: none;
+      z-index: 90;
+      white-space: nowrap;
+      transform: translate(-50%, -120%);
+    }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position: fixed;
+      background: var(--ac-ui-bg);
+      border: 2px solid var(--ac-ui-border);
+      border-radius: 14px;
+      padding: 7px 13px;
+      font-size: 0.82rem;
+      color: var(--ac-ui-text);
+      pointer-events: none;
+      z-index: 110;
+      display: none;
+      box-shadow: 0 2px 10px var(--ac-ui-shadow);
+      transform: translate(-50%, -110%);
+    }
+
+    /* ── Dialogue Box ── */
+    #dialogue {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      width: min(520px, 90vw);
+      background: var(--ac-ui-bg);
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 23px,
+        rgba(212,169,106,0.07) 24px
+      );
+      border: 4px solid var(--ac-ui-border);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px var(--ac-ui-shadow);
+      padding: 22px 26px 20px;
+      z-index: 200;
+      opacity: 0;
+      display: none;
+      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    }
+
+    #dialogue.open {
+      display: block;
+    }
+
+    #dialogue.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #dialogue-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    #dialogue-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    #dialogue-leaf { font-size: 1.3rem; flex-shrink: 0; }
+
+    #dialogue-name {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--ac-ui-heading);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #dialogue-badge {
+      font-family: 'Varela Round', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 999px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    #dialogue-close {
+      background: var(--ac-ui-btn);
+      border: none;
+      border-radius: 999px;
+      width: 30px; height: 30px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-left: 10px;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #dialogue-close:hover { background: var(--ac-ui-btn-hover); transform: translateY(-2px); }
+
+    #dialogue-body {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px 18px;
+      font-size: 0.82rem;
+    }
+
+    .dlabel {
+      font-family: 'Varela Round', sans-serif;
+      color: var(--ac-ui-heading);
+      opacity: 0.75;
+      white-space: nowrap;
+    }
+
+    .dval {
+      font-family: 'DM Mono', monospace;
+      color: var(--ac-ui-text);
+      word-break: break-all;
+    }
+
+    /* ── Loading / Error ── */
+    #overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      pointer-events: none;
+    }
+
+    .overlay-card {
+      background: var(--ac-ui-bg);
+      border: 3px solid var(--ac-ui-border);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px var(--ac-ui-shadow);
+      padding: 32px 40px;
+      text-align: center;
+      pointer-events: all;
+    }
+
+    .overlay-card .emoji {
+      font-size: 2.4rem;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .overlay-card .title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--ac-ui-heading);
+      margin-bottom: 6px;
+    }
+
+    .overlay-card .sub {
+      font-size: 0.9rem;
+      color: var(--ac-ui-text);
+      opacity: 0.8;
+      margin-bottom: 16px;
+    }
+
+    .ac-btn {
+      background: var(--ac-ui-btn);
+      border: none;
+      border-radius: 999px;
+      padding: 10px 26px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--ac-ui-heading);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .ac-btn:hover { background: var(--ac-ui-btn-hover); transform: translateY(-2px); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+    .pulse { animation: pulse 1.4s infinite; }
+
+    #overlay.hidden { display: none; }
+
+    /* ── Moon Modal ── */
+    #moon-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      background: rgba(60,40,20,0.35);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    #moon-modal.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #moon-modal-inner {
+      background: var(--ac-ui-bg);
+      background-image: repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(212,169,106,0.07) 24px);
+      border: 4px solid var(--ac-ui-border);
+      border-radius: 24px;
+      box-shadow: 0 12px 48px var(--ac-ui-shadow);
+      padding: 28px 32px 24px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      max-width: 340px;
+      width: 90vw;
+      transform: translateY(16px);
+      transition: transform 0.25s ease;
+    }
+    #moon-modal.open #moon-modal-inner {
+      transform: translateY(0);
+    }
+    #rover-svg {
+      width: 100%;
+      max-width: 260px;
+    }
+    #moon-modal-text {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--ac-ui-heading);
+      text-align: center;
+      line-height: 1.5;
+    }
+    #moon-modal-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: var(--ac-ui-btn);
+      border: none;
+      border-radius: 999px;
+      width: 30px; height: 30px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #moon-modal-close:hover { background: var(--ac-ui-btn-hover); transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div id="topbar">
+  <div id="logo">🌿 NEO Dashboard</div>
+
+  <div id="topbar-center">
+    <div id="date-picker-wrap">
+      <span id="cal-emoji">📅</span>
+      <input type="date" id="date-input" aria-label="Select date for NEO data" />
+    </div>
+  </div>
+
+  <div id="haz-toggle-wrap" role="button" aria-label="Toggle hazardous only view" tabindex="0">
+    <div class="pill-toggle" id="haz-pill"></div>
+    ⚠️ Hazardous Only
+  </div>
+</div>
+
+<!-- 3D Canvas -->
+<div id="canvas-wrap">
+  <canvas id="three-canvas" role="img" aria-label="3D visualisation of Near-Earth Objects"></canvas>
+</div>
+
+<!-- Count Panel -->
+<div id="count-panel">
+  <h2>☄️ NEOs</h2>
+  <div id="count-total">Loading…</div>
+  <div id="count-haz"></div>
+</div>
+
+<!-- Moon label -->
+<div id="moon-label">🌕 Moon / 1 LD</div>
+
+<!-- Tooltip -->
+<div id="tooltip" role="tooltip"></div>
+
+<!-- Dialogue Box -->
+<div id="dialogue" role="dialog" aria-modal="true" aria-labelledby="dialogue-name">
+  <div id="dialogue-header">
+    <div id="dialogue-title-wrap">
+      <span id="dialogue-leaf">🌿</span>
+      <span id="dialogue-name"></span>
+    </div>
+    <span id="dialogue-badge"></span>
+    <button id="dialogue-close" aria-label="Close dialogue">✕</button>
+  </div>
+  <div id="dialogue-body"></div>
+</div>
+
+<!-- Moon Modal -->
+<div id="moon-modal" role="dialog" aria-modal="true" aria-label="Moon visitor">
+  <div id="moon-modal-inner">
+    <button id="moon-modal-close" aria-label="Close">✕</button>
+    <svg id="rover-svg" viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ground shadow -->
+      <ellipse cx="130" cy="188" rx="72" ry="9" fill="rgba(100,70,30,0.18)"/>
+      <!-- Wheels -->
+      <circle cx="72" cy="168" r="20" fill="#5C3D1E" stroke="#3D2B1F" stroke-width="3"/>
+      <circle cx="72" cy="168" r="11" fill="#D4A96A"/>
+      <circle cx="72" cy="168" r="4"  fill="#5C3D1E"/>
+      <circle cx="188" cy="168" r="20" fill="#5C3D1E" stroke="#3D2B1F" stroke-width="3"/>
+      <circle cx="188" cy="168" r="11" fill="#D4A96A"/>
+      <circle cx="188" cy="168" r="4"  fill="#5C3D1E"/>
+      <!-- Car body -->
+      <rect x="44" y="130" width="172" height="44" rx="16" fill="#FFCC5C" stroke="#D4A96A" stroke-width="3"/>
+      <!-- Roof -->
+      <rect x="72" y="96" width="116" height="42" rx="14" fill="#FFB830" stroke="#D4A96A" stroke-width="3"/>
+      <!-- Window -->
+      <rect x="84" y="104" width="42" height="28" rx="8" fill="#B8E8F7" stroke="#D4A96A" stroke-width="2" opacity="0.85"/>
+      <rect x="134" y="104" width="42" height="28" rx="8" fill="#B8E8F7" stroke="#D4A96A" stroke-width="2" opacity="0.85"/>
+      <!-- Headlights -->
+      <ellipse cx="56" cy="152" rx="9" ry="6" fill="#FFFBF0" stroke="#D4A96A" stroke-width="2"/>
+      <ellipse cx="204" cy="152" rx="9" ry="6" fill="#FFFBF0" stroke="#D4A96A" stroke-width="2"/>
+      <!-- Antenna on roof -->
+      <line x1="155" y1="96" x2="155" y2="68" stroke="#5C3D1E" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="155" cy="64" r="5" fill="#FF6B6B" stroke="#5C3D1E" stroke-width="2"/>
+
+      <!-- Astronaut helmet (fishbowl) sitting on roof -->
+      <!-- Neck/suit collar -->
+      <rect x="110" y="70" width="40" height="18" rx="8" fill="#EEF6FF" stroke="#B8D8F0" stroke-width="2"/>
+      <!-- Helmet sphere -->
+      <circle cx="130" cy="46" r="34" fill="#EEF6FF" stroke="#B8D8F0" stroke-width="3"/>
+      <!-- Tanuki ears (round, like Tom Nook) -->
+      <circle cx="103" cy="22" r="12" fill="#7A4E2D" stroke="#5C3310" stroke-width="2"/>
+      <circle cx="103" cy="22" r="6.5" fill="#C4855A"/>
+      <circle cx="157" cy="22" r="12" fill="#7A4E2D" stroke="#5C3310" stroke-width="2"/>
+      <circle cx="157" cy="22" r="6.5" fill="#C4855A"/>
+      <!-- Tom Nook brown fur base -->
+      <circle cx="130" cy="49" r="23" fill="#A0714F"/>
+      <!-- Lighter face centre -->
+      <ellipse cx="130" cy="51" rx="15" ry="17" fill="#C4956A"/>
+      <!-- Dark raccoon eye patches -->
+      <ellipse cx="120" cy="44" rx="8" ry="7" fill="#5C3310"/>
+      <ellipse cx="140" cy="44" rx="8" ry="7" fill="#5C3310"/>
+      <!-- Eyes whites -->
+      <circle cx="120" cy="44" r="5" fill="white"/>
+      <circle cx="140" cy="44" r="5" fill="white"/>
+      <!-- Pupils -->
+      <circle cx="121" cy="45" r="3" fill="#1A0F00"/>
+      <circle cx="141" cy="45" r="3" fill="#1A0F00"/>
+      <!-- Eye shine -->
+      <circle cx="122" cy="43.5" r="1.1" fill="white"/>
+      <circle cx="142" cy="43.5" r="1.1" fill="white"/>
+      <!-- Cream muzzle -->
+      <ellipse cx="130" cy="56" rx="10" ry="7" fill="#F0DFC0"/>
+      <!-- Nose — dark oval -->
+      <ellipse cx="130" cy="51" rx="3.5" ry="2.5" fill="#3D2010"/>
+      <!-- Nostrils -->
+      <circle cx="128.2" cy="52" r="0.9" fill="#2A1508"/>
+      <circle cx="131.8" cy="52" r="0.9" fill="#2A1508"/>
+      <!-- Friendly Nook smile -->
+      <path d="M122 58 Q130 65 138 58" stroke="#3D2010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <!-- Visor overlay (subtle, so face is visible) -->
+      <ellipse cx="130" cy="44" rx="24" ry="20" fill="#4EB8E0" opacity="0.18" stroke="#2A85C0" stroke-width="2"/>
+      <!-- Visor shine -->
+      <ellipse cx="116" cy="34" rx="7" ry="4.5" fill="white" opacity="0.35" transform="rotate(-18,116,34)"/>
+      <!-- Helmet rim -->
+      <circle cx="130" cy="46" r="34" fill="none" stroke="#D4A96A" stroke-width="3"/>
+
+      <!-- Stars around helmet -->
+      <text x="26"  y="28"  font-size="14" fill="#FFCC5C" opacity="0.9">✦</text>
+      <text x="215" y="22"  font-size="10" fill="#FFCC5C" opacity="0.8">✦</text>
+      <text x="205" y="55"  font-size="8"  fill="#FFCC5C" opacity="0.7">✦</text>
+      <text x="32"  y="60"  font-size="8"  fill="#FFCC5C" opacity="0.7">✦</text>
+    </svg>
+    <div id="moon-modal-text"></div>
+  </div>
+</div>
+
+<!-- Loading / Error Overlay -->
+<div id="overlay">
+  <div class="overlay-card" id="overlay-card">
+    <span class="emoji pulse" id="overlay-emoji">🔭</span>
+    <div class="title" id="overlay-title">Scanning the skies…</div>
+    <div class="sub" id="overlay-sub">Contacting NASA NeoWs</div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ──────────────────────────────────────────────
+// 🔑 Replace with your NASA API key when ready
+const NASA_API_KEY = "FUGrjEcjBTsBB37j3eK2LK1ZGbN6NgNSxio8gb1k";
+// ──────────────────────────────────────────────
+
+// ── State ─────────────────────────────────────
+let neoObjects = [];
+let neoMarkers = [];
+let hazardousOnly = false;
+let currentNeo = null;
+let typewriterTimer = null;
+
+// ── Date Init ─────────────────────────────────
+const dateInput = document.getElementById('date-input');
+const today = new Date().toISOString().slice(0, 10);
+dateInput.value = today;
+
+// ── Renderer ──────────────────────────────────
+const canvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+// ── Scene / Camera ────────────────────────────
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 0, 12);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.minDistance = 3.5;
+controls.maxDistance = 60;
+controls.autoRotate = false;
+
+// ── Background gradient ────────────────────────
+renderer.setClearColor(0xB8E8F7);
+scene.background = (() => {
+  const canvas2 = document.createElement('canvas');
+  canvas2.width = 2; canvas2.height = 512;
+  const ctx = canvas2.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 512);
+  grad.addColorStop(0, '#B8E8F7');
+  grad.addColorStop(1, '#FFDBB5');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 2, 512);
+  const tex = new THREE.CanvasTexture(canvas2);
+  return tex;
+})();
+
+// ── Lighting ──────────────────────────────────
+scene.add(new THREE.AmbientLight(0xFFF5E0, 0.55));
+const sunLight = new THREE.DirectionalLight(0xFFEEDD, 1.2);
+sunLight.position.set(10, 8, 5);
+scene.add(sunLight);
+const rimLight = new THREE.DirectionalLight(0xCCE8FF, 0.3);
+rimLight.position.set(-8, -4, -6);
+scene.add(rimLight);
+
+// ── Starfield ─────────────────────────────────
+{
+  const count = 700;
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 280 + Math.random() * 40;
+    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 2] = r * Math.cos(phi);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.25, sizeAttenuation: true });
+  scene.add(new THREE.Points(geo, mat));
+}
+
+// ── Earth Shader ──────────────────────────────
+const earthVertexShader = `
+  varying vec3 vNormal;
+  varying vec2 vUv;
+  varying vec3 vPosition;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vUv = uv;
+    vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const earthFragmentShader = `
+  varying vec3 vNormal;
+  varying vec2 vUv;
+  varying vec3 vPosition;
+  uniform vec3 uSunDir;
+  uniform float uTime;
+
+  // 3D hash — no UV seam
+  float hash3(vec3 p) {
+    p = fract(p * vec3(443.897, 397.297, 491.187));
+    p += dot(p, p.yxz + 19.19);
+    return fract((p.x + p.y) * p.z);
+  }
+
+  // 3D value noise
+  float noise3(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(mix(hash3(i),               hash3(i+vec3(1,0,0)), f.x),
+          mix(hash3(i+vec3(0,1,0)),   hash3(i+vec3(1,1,0)), f.x), f.y),
+      mix(mix(hash3(i+vec3(0,0,1)),   hash3(i+vec3(1,0,1)), f.x),
+          mix(hash3(i+vec3(0,1,1)),   hash3(i+vec3(1,1,1)), f.x), f.y),
+      f.z
+    );
+  }
+
+  float fbm3(vec3 p) {
+    float v = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i < 4; i++) {
+      v += amp * noise3(p);
+      p *= 2.1;
+      amp *= 0.48;
+    }
+    return v;
+  }
+
+  void main() {
+    // Use normalised 3D position — seamless over the whole sphere
+    vec3 sp = normalize(vPosition);
+
+    // Latitude from Y component
+    float lat = sp.y; // -1..1
+
+    // Continent noise — offset to get interesting shapes
+    vec3 noiseP = sp * 2.8 + vec3(1.7, 3.4, 0.9);
+    float land = fbm3(noiseP);
+    float landThresh = 0.52;
+    bool isLand = land > landThresh;
+
+    // Land detail (second noise layer for colour variation)
+    float landDetail = fbm3(sp * 5.5 + vec3(5.1, 2.7, 3.3));
+    float sandBlend  = smoothstep(0.3, 0.6, landDetail) * smoothstep(0.35, 0.0, abs(lat));
+
+    vec3 colGreen = mix(vec3(0.306, 0.788, 0.478), vec3(0.306, 0.620, 0.345), landDetail);
+    vec3 colSand  = vec3(0.961, 0.875, 0.627);
+    vec3 landCol  = mix(colGreen, colSand, sandBlend * 0.65);
+
+    // Ocean — shallow tint near coast
+    float shallowBlend = smoothstep(landThresh - 0.08, landThresh, land);
+    vec3 colOceanShallow = vec3(0.306, 0.722, 0.878);
+    vec3 colOceanDeep    = vec3(0.165, 0.522, 0.753);
+    vec3 oceanCol = mix(colOceanDeep, colOceanShallow, shallowBlend);
+
+    // Specular on ocean
+    vec3 sunDir  = normalize(uSunDir);
+    vec3 norm    = normalize(vNormal);
+    vec3 viewDir = normalize(cameraPosition - vPosition);
+    vec3 halfVec = normalize(sunDir + viewDir);
+    float spec   = pow(max(dot(norm, halfVec), 0.0), 40.0) * 0.4;
+    vec3 specCol = vec3(spec);
+
+    // Combine
+    vec3 col = isLand ? landCol : (oceanCol + specCol);
+
+    // Diffuse lighting
+    float diff = max(dot(norm, sunDir), 0.0) * 0.6 + 0.4;
+    col *= diff;
+
+
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+
+const earthGeo = new THREE.SphereGeometry(2, 96, 96);
+const earthMat = new THREE.ShaderMaterial({
+  vertexShader: earthVertexShader,
+  fragmentShader: earthFragmentShader,
+  uniforms: {
+    uSunDir: { value: new THREE.Vector3(10, 8, 5).normalize() },
+    uTime:   { value: 0 },
+  },
+});
+const earth = new THREE.Mesh(earthGeo, earthMat);
+scene.add(earth);
+
+// Atmosphere limb
+const atmGeo = new THREE.SphereGeometry(2.08, 64, 64);
+const atmMat = new THREE.MeshBasicMaterial({
+  color: 0xB8E8F7,
+  transparent: true,
+  opacity: 0,
+  side: THREE.BackSide,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+});
+const atmosphere = new THREE.Mesh(atmGeo, atmMat);
+
+// Custom atmosphere using ShaderMaterial for limb effect
+const atmVertShader = `
+  varying vec3 vNormal;
+  varying vec3 vViewDir;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+    vViewDir = normalize(-mvPos.xyz);
+    gl_Position = projectionMatrix * mvPos;
+  }
+`;
+const atmFragShader = `
+  varying vec3 vNormal;
+  varying vec3 vViewDir;
+  void main() {
+    float rim = 1.0 - max(dot(vNormal, vViewDir), 0.0);
+    rim = pow(rim, 3.0);
+    gl_FragColor = vec4(0.722, 0.910, 0.969, rim * 0.28);
+  }
+`;
+atmosphere.material = new THREE.ShaderMaterial({
+  vertexShader: atmVertShader,
+  fragmentShader: atmFragShader,
+  transparent: true,
+  side: THREE.BackSide,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+});
+scene.add(atmosphere);
+
+// ── Moon ──────────────────────────────────────
+const moonGeo = new THREE.SphereGeometry(0.54, 48, 48);
+const moonMat = new THREE.MeshStandardMaterial({ color: 0xE8E0C8, roughness: 0.9, metalness: 0.0 });
+const moon = new THREE.Mesh(moonGeo, moonMat);
+moon.position.set(51, 0, 0);
+scene.add(moon);
+
+// ── NEO Marker Group ──────────────────────────
+const neoGroup = new THREE.Group();
+scene.add(neoGroup);
+
+// ── Fibonacci Sphere ──────────────────────────
+function fibonacciSphere(index, total) {
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const y = 1 - (index / (total - 1)) * 2;
+  const r = Math.sqrt(1 - y * y);
+  const theta = golden * index;
+  return new THREE.Vector3(Math.cos(theta) * r, y, Math.sin(theta) * r);
+}
+
+// ── Build NEO markers ─────────────────────────
+function buildMarkers(neos) {
+  // Clear old
+  while (neoGroup.children.length) {
+    const c = neoGroup.children[0];
+    c.geometry?.dispose();
+    c.material?.dispose();
+    neoGroup.remove(c);
+  }
+  neoMarkers = [];
+
+  const total = neos.length || 1;
+  neos.forEach((neo, i) => {
+    const ld = parseFloat(neo.missLD);
+    const dist = Math.min((ld / 1.0) * 51, 55);
+    const dir = fibonacciSphere(i, total).normalize();
+    const pos = dir.clone().multiplyScalar(dist);
+
+    const isHaz = neo.hazardous;
+    const color    = isHaz ? 0xFF6B6B : 0x78C97A;
+    const emissive = isHaz ? 0xFF3333 : 0x55DD55;
+    const emissiveIntensity = isHaz ? 1.2 : 0.7;
+
+    // Core sphere — bigger and bright
+    const geo = new THREE.SphereGeometry(0.42, 16, 16);
+    const mat = new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity, roughness: 0.35, metalness: 0.1 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(pos);
+    mesh.userData.neo = neo;
+    mesh.userData.phaseOffset = Math.random() * Math.PI * 2;
+    mesh.userData.basePos = pos.clone();
+    neoGroup.add(mesh);
+    neoMarkers.push(mesh);
+
+    // Glow halo — additive transparent shell
+    const glowGeo = new THREE.SphereGeometry(0.82, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: isHaz ? 0xFF4444 : 0x66FF66,
+      transparent: true,
+      opacity: isHaz ? 0.18 : 0.12,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.copy(pos);
+    glow.userData.isGlow = true;
+    glow.userData.phaseOffset = mesh.userData.phaseOffset;
+    glow.userData.basePos = pos.clone();
+    neoGroup.add(glow);
+
+    // Connector line
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([
+      dir.clone().multiplyScalar(2.05),
+      pos,
+    ]);
+    const lineMat = new THREE.LineDashedMaterial({ color: 0xffffff, opacity: 0.15, transparent: true, dashSize: 0.3, gapSize: 0.2 });
+    const line = new THREE.Line(lineGeo, lineMat);
+    line.computeLineDistances();
+    neoGroup.add(line);
+  });
+}
+
+// ── Raycaster / Hover ─────────────────────────
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2(-9999, -9999);
+let hoveredMarker = null;
+const tooltip = document.getElementById('tooltip');
+
+window.addEventListener('mousemove', (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const moonHover = raycaster.intersectObject(moon);
+  if (moonHover.length > 0) {
+    canvas.style.cursor = 'pointer';
+    hoveredMarker = null;
+    tooltip.style.display = 'none';
+    return;
+  }
+  const hits = raycaster.intersectObjects(neoMarkers);
+  if (hits.length > 0) {
+    const hit = hits[0].object;
+    if (hoveredMarker !== hit) hoveredMarker = hit;
+    const neo = hit.userData.neo;
+    tooltip.innerHTML = `<strong>${neo.name}</strong><br>${parseFloat(neo.missLD).toFixed(3)} LD`;
+    tooltip.style.display = 'block';
+    tooltip.style.left = e.clientX + 'px';
+    tooltip.style.top  = e.clientY + 'px';
+    canvas.style.cursor = 'pointer';
+  } else {
+    hoveredMarker = null;
+    tooltip.style.display = 'none';
+    canvas.style.cursor = '';
+  }
+});
+
+window.addEventListener('click', (e) => {
+  raycaster.setFromCamera(mouse, camera);
+  // Check moon first
+  const moonHits = raycaster.intersectObject(moon);
+  if (moonHits.length > 0) { openMoonModal(); return; }
+  // Then NEOs
+  const hits = raycaster.intersectObjects(neoMarkers);
+  if (hits.length > 0) openDialogue(hits[0].object.userData.neo);
+});
+
+// ── Dialogue ──────────────────────────────────
+const dialogue   = document.getElementById('dialogue');
+const dlgName    = document.getElementById('dialogue-name');
+const dlgBadge   = document.getElementById('dialogue-badge');
+const dlgBody    = document.getElementById('dialogue-body');
+const dlgClose   = document.getElementById('dialogue-close');
+
+function openDialogue(neo) {
+  if (typewriterTimer) clearTimeout(typewriterTimer);
+  currentNeo = neo;
+
+  dlgName.textContent = neo.name;
+  dlgBadge.textContent = neo.hazardous ? '⚠ HAZARDOUS' : '✓ SAFE';
+  dlgBadge.style.background = neo.hazardous ? 'var(--ac-ui-accent)' : 'var(--ac-ui-safe)';
+
+  const rows = [
+    ['NASA ID',        `#${neo.id}`],
+    ['Diameter',       `${neo.diamMin}–${neo.diamMax} m (estimated)`],
+    ['Velocity',       `${neo.velocity} km/h`],
+    ['Close Approach', neo.closeApproach],
+    ['Miss Distance',  `${parseFloat(neo.missLD).toFixed(3)} LD  /  ${parseInt(neo.missKm).toLocaleString()} km`],
+  ];
+
+  dlgBody.innerHTML = '';
+  rows.forEach(([label, val]) => {
+    const lEl = document.createElement('div');
+    lEl.className = 'dlabel';
+    lEl.textContent = label;
+    const vEl = document.createElement('div');
+    vEl.className = 'dval';
+    vEl.textContent = '';
+    vEl.dataset.full = val;
+    dlgBody.appendChild(lEl);
+    dlgBody.appendChild(vEl);
+  });
+
+  dialogue.classList.add('open');
+  requestAnimationFrame(() => dialogue.classList.add('visible'));
+
+  // Typewriter on all val elements
+  const valEls = dlgBody.querySelectorAll('.dval');
+  let elIdx = 0, charIdx = 0;
+  function typeNext() {
+    if (elIdx >= valEls.length) return;
+    const el = valEls[elIdx];
+    const full = el.dataset.full;
+    if (charIdx < full.length) {
+      el.textContent = full.slice(0, charIdx + 1);
+      charIdx++;
+      typewriterTimer = setTimeout(typeNext, 18);
+    } else {
+      elIdx++; charIdx = 0;
+      typewriterTimer = setTimeout(typeNext, 30);
+    }
+  }
+  setTimeout(typeNext, 200);
+}
+
+function closeDialogue() {
+  dialogue.classList.remove('visible');
+  setTimeout(() => dialogue.classList.remove('open'), 250);
+  if (typewriterTimer) clearTimeout(typewriterTimer);
+}
+
+dlgClose.addEventListener('click', closeDialogue);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDialogue(); });
+document.addEventListener('click', (e) => {
+  if (dialogue.classList.contains('open') && !dialogue.contains(e.target) && !neoMarkers.includes(e.target)) {
+    closeDialogue();
+  }
+});
+
+// ── Hazardous Toggle ──────────────────────────
+const hazPill = document.getElementById('haz-pill');
+document.getElementById('haz-toggle-wrap').addEventListener('click', () => {
+  hazardousOnly = !hazardousOnly;
+  hazPill.classList.toggle('active', hazardousOnly);
+  neoMarkers.forEach(m => {
+    if (!m.userData.neo) return;
+    const hide = hazardousOnly && !m.userData.neo.hazardous;
+    m.material.opacity = hide ? 0.1 : 1;
+    m.material.transparent = hide;
+  });
+});
+
+// ── Count Panel ───────────────────────────────
+function updateCount(total, haz) {
+  document.getElementById('count-total').textContent = `${total} NEO${total !== 1 ? 's' : ''} detected`;
+  document.getElementById('count-haz').textContent   = `${haz} potentially hazardous`;
+}
+
+// ── Overlay helpers ───────────────────────────
+const overlay     = document.getElementById('overlay');
+const overlayCard = document.getElementById('overlay-card');
+const oEmoji      = document.getElementById('overlay-emoji');
+const oTitle      = document.getElementById('overlay-title');
+const oSub        = document.getElementById('overlay-sub');
+
+function showLoading() {
+  overlay.classList.remove('hidden');
+  oEmoji.className = 'emoji pulse';
+  oEmoji.textContent = '🔭';
+  oTitle.textContent = 'Scanning the skies…';
+  oSub.textContent   = 'Contacting NASA NeoWs';
+  if (overlayCard.querySelector('.ac-btn')) overlayCard.querySelector('.ac-btn').remove();
+}
+
+function showError() {
+  overlay.classList.remove('hidden');
+  oEmoji.className = 'emoji';
+  oEmoji.textContent = '🪐';
+  oTitle.textContent = "Couldn't load NEO data.";
+  oSub.textContent   = 'Check your connection or API key.';
+  if (!overlayCard.querySelector('.ac-btn')) {
+    const btn = document.createElement('button');
+    btn.className = 'ac-btn';
+    btn.textContent = 'Try Again';
+    btn.addEventListener('click', fetchNeos);
+    overlayCard.appendChild(btn);
+  }
+}
+
+function hideOverlay() {
+  overlay.classList.add('hidden');
+}
+
+// ── NASA API Fetch ────────────────────────────
+// ── Moon Modal ────────────────────────────────
+const moonModal = document.getElementById('moon-modal');
+const moonModalText = document.getElementById('moon-modal-text');
+const moonModalClose = document.getElementById('moon-modal-close');
+
+const moonMessages = [
+  "Vroom vroom… in SPACE! 🚗✨",
+  "Tom Nook sends his regards. 🌕",
+  "One small drive for Rover…",
+  "Beep beep! The Moon is 1 LD away! 🌙",
+];
+
+function openMoonModal() {
+  moonModalText.textContent = moonMessages[Math.floor(Math.random() * moonMessages.length)];
+  moonModal.classList.add('open');
+}
+function closeMoonModal() {
+  moonModal.classList.remove('open');
+}
+moonModalClose.addEventListener('click', closeMoonModal);
+moonModal.addEventListener('click', (e) => { if (e.target === moonModal) closeMoonModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMoonModal(); });
+
+// ── NASA API Fetch ─────────────────────────────
+async function fetchNeos() {
+  showLoading();
+  const date = dateInput.value;
+  const url  = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${date}&end_date=${date}&api_key=${NASA_API_KEY}`;
+
+  try {
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const allNeos = Object.values(data.near_earth_objects).flat();
+    neoObjects = allNeos.map(neo => ({
+      id:           neo.id,
+      name:         neo.name.replace(/[()]/g, '').trim(),
+      hazardous:    neo.is_potentially_hazardous_asteroid,
+      diamMin:      Math.round(neo.estimated_diameter.kilometers.estimated_diameter_min * 1000),
+      diamMax:      Math.round(neo.estimated_diameter.kilometers.estimated_diameter_max * 1000),
+      missLD:       neo.close_approach_data[0].miss_distance.lunar,
+      missKm:       neo.close_approach_data[0].miss_distance.kilometers,
+      velocity:     Math.round(parseFloat(neo.close_approach_data[0].relative_velocity.kilometers_per_hour)).toLocaleString(),
+      closeApproach: neo.close_approach_data[0].close_approach_date_full,
+    }));
+
+    buildMarkers(neoObjects);
+    const hazCount = neoObjects.filter(n => n.hazardous).length;
+    updateCount(neoObjects.length, hazCount);
+    hideOverlay();
+  } catch (err) {
+    console.error(err);
+    showError();
+  }
+}
+
+// ── Moon Label ────────────────────────────────
+const moonLabel = document.getElementById('moon-label');
+function updateMoonLabel() {
+  const vec = moon.position.clone().project(camera);
+  const x = (vec.x * 0.5 + 0.5) * window.innerWidth;
+  const y = (-(vec.y * 0.5) + 0.5) * window.innerHeight;
+  if (vec.z < 1) {
+    moonLabel.style.display = 'block';
+    moonLabel.style.left = x + 'px';
+    moonLabel.style.top  = y + 'px';
+  } else {
+    moonLabel.style.display = 'none';
+  }
+}
+
+// ── Resize ────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── Animation Loop ────────────────────────────
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  earth.rotation.y += 0.0004;
+  earthMat.uniforms.uTime.value = t;
+
+  // NEO float + hover scale + emissive pulse
+  neoGroup.children.forEach(obj => {
+    const phase = obj.userData.phaseOffset || 0;
+    const base  = obj.userData.basePos;
+    if (base) obj.position.y = base.y + Math.sin(t + phase) * 0.06;
+
+    if (obj.userData.isGlow) return; // glow halos just float, no scale
+
+    const m = obj;
+    const target = (m === hoveredMarker) ? 1.6 : 1.0;
+    m.scale.lerp(new THREE.Vector3(target, target, target), 0.12);
+
+    if (m.userData.neo?.hazardous) {
+      m.material.emissiveIntensity = 0.9 + Math.sin(t * 2.0 + phase) * 0.35;
+    } else {
+      m.material.emissiveIntensity = 0.5 + Math.sin(t * 1.2 + phase) * 0.2;
+    }
+  });
+
+  controls.update();
+  updateMoonLabel();
+  renderer.render(scene, camera);
+}
+
+// ── Init ──────────────────────────────────────
+dateInput.addEventListener('change', fetchNeos);
+fetchNeos();
+animate();
+</script>
+</body>
+</html>
