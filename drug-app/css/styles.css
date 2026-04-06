@@ -408,6 +408,56 @@ main {
 
 #overlap-panel.hidden { display: none; }
 
+/* ── "Can they be taken together?" summary box ───────────────────────────── */
+.together-box {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  border-left: 5px solid;
+}
+
+.together-high { background: #fdf0f1; border-color: var(--sev-high); }
+.together-mod  { background: #fffbee; border-color: var(--sev-mod); }
+.together-low  { background: #f0faf0; border-color: var(--sev-low); }
+
+.together-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: .1rem;
+}
+
+.together-question {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin-bottom: .2rem;
+}
+
+.together-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: .35rem;
+}
+
+.together-body {
+  font-size: .875rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.overlap-detail-heading {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+  margin-bottom: .9rem;
+}
+
 .overlap-badge {
   display: inline-flex;
   align-items: center;

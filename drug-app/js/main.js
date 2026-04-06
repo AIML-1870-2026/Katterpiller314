@@ -170,16 +170,37 @@ function renderReactionsCard(reactions) {
 function renderOverlap(overlap, nameA, nameB) {
   const { sharedWarnings, sharedIngredients, sharedReactions, severity } = overlap;
 
-  const sevClass = { high: 'sev-high', moderate: 'sev-mod', low: 'sev-low' }[severity];
-  const sevIcon  = { high: '⚠', moderate: '⚠', low: '✓' }[severity];
-  const sevLabel = { high: 'High overlap detected', moderate: 'Moderate overlap detected', low: 'No significant overlap found' }[severity];
+  const togetherSummary = {
+    high: {
+      icon: '⚠',
+      heading: 'Use caution — talk to a professional first.',
+      body: `These two drugs share significant overlapping risks in FDA data. <strong>Do not start, stop, or combine medications without speaking to your doctor or pharmacist.</strong>`,
+      cls: 'together-high',
+    },
+    moderate: {
+      icon: '⚡',
+      heading: 'Possibly, but be aware of shared risks.',
+      body: `These drugs have some overlapping warnings or side effects. It\'s a good idea to ask your pharmacist whether it\'s safe to take them at the same time.`,
+      cls: 'together-mod',
+    },
+    low: {
+      icon: '✓',
+      heading: 'No major overlapping risks found.',
+      body: `FDA data shows no significant shared warnings, ingredients, or side effects between these two drugs. As always, confirm with your healthcare provider before combining medications.`,
+      cls: 'together-low',
+    },
+  }[severity];
 
   let html = `
-    <div class="overlap-badge ${sevClass}">
-      <span class="sev-icon">${sevIcon}</span>
-      ${esc(sevLabel)}
+    <div class="together-box ${togetherSummary.cls}">
+      <div class="together-icon">${togetherSummary.icon}</div>
+      <div class="together-text">
+        <div class="together-question">Can <strong>${esc(nameA)}</strong> and <strong>${esc(nameB)}</strong> be taken together?</div>
+        <div class="together-heading">${togetherSummary.heading}</div>
+        <div class="together-body">${togetherSummary.body}</div>
+      </div>
     </div>
-    <p class="overlap-subtitle">Comparing <strong>${esc(nameA)}</strong> and <strong>${esc(nameB)}</strong></p>`;
+    <h3 class="overlap-detail-heading">Details</h3>`;
 
   // Shared ingredients
   html += `<div class="overlap-section">

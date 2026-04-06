@@ -17,29 +17,40 @@ const SERIOUS_CONCEPTS = [
   'fatal', 'death', 'life-threatening',
 ];
 
+// General: specific medical conditions / drug interaction classes only.
+// Do NOT include generic symptoms (nausea, dizziness, headache, etc.) —
+// those appear on almost every label and produce meaningless matches.
 const GENERAL_CONCEPTS = [
-  'high blood pressure', 'hypertension', 'low blood pressure', 'hypotension',
-  'diabetes', 'blood sugar', 'hypoglycemia', 'hyperglycemia',
-  'kidney', 'renal', 'liver', 'hepatic',
-  'heart disease', 'cardiovascular', 'coronary artery',
-  'bleeding', 'bruising', 'blood thinners', 'anticoagulant',
-  'thyroid', 'adrenal', 'hormones',
-  'asthma', 'breathing problems', 'lung disease', 'COPD',
-  'depression', 'anxiety', 'mental health', 'psychiatric',
-  'alcohol', 'alcoholism',
-  'pregnancy', 'breastfeeding', 'nursing', 'breast-feeding',
-  'children', 'pediatric', 'elderly', 'geriatric',
-  'allergy', 'allergic', 'hypersensitivity',
-  'glaucoma', 'vision', 'eye pressure',
-  'prostate', 'urinary retention',
-  'infection', 'immune system', 'immunocompromised',
-  'inflammation', 'swelling', 'edema',
-  'nausea', 'vomiting', 'diarrhea', 'constipation',
-  'headache', 'dizziness', 'drowsiness', 'sedation',
-  'skin rash', 'rash', 'hives', 'itching',
-  'muscle pain', 'joint pain', 'bone',
-  'potassium', 'sodium', 'electrolyte',
-  'blood pressure', 'pulse', 'heart rate',
+  // Cardiovascular conditions
+  'hypertension', 'high blood pressure', 'hypotension', 'low blood pressure',
+  'heart disease', 'coronary artery disease', 'atrial fibrillation',
+  // Metabolic conditions
+  'diabetes', 'hypoglycemia', 'hyperglycemia', 'blood sugar',
+  'hypothyroidism', 'hyperthyroidism', 'thyroid disease', 'adrenal insufficiency',
+  // Organ impairment (specific phrases, not bare organ names)
+  'renal impairment', 'kidney impairment', 'kidney disease',
+  'hepatic impairment', 'liver disease', 'liver problems',
+  // Respiratory conditions
+  'asthma', 'COPD', 'chronic obstructive pulmonary disease', 'lung disease',
+  // Psychiatric conditions
+  'depression', 'bipolar disorder', 'schizophrenia', 'anxiety disorder',
+  'psychiatric disorder', 'serotonin syndrome',
+  // Drug interaction classes
+  'blood thinners', 'anticoagulant', 'anticoagulation', 'warfarin',
+  'MAO inhibitor', 'MAOI', 'serotonergic', 'CNS depressant',
+  'CYP3A4', 'CYP2D6', 'enzyme inhibitor',
+  // Electrolyte imbalances (clinically significant)
+  'hypokalemia', 'hyperkalemia', 'hyponatremia', 'hypernatremia', 'electrolyte imbalance',
+  // Allergy / hypersensitivity (specific)
+  'hypersensitivity reaction', 'allergic reaction', 'drug hypersensitivity',
+  // Other specific conditions
+  'glaucoma', 'angle-closure glaucoma', 'urinary retention', 'benign prostatic',
+  'immunocompromised', 'immunosuppressed',
+  'myasthenia gravis', 'porphyria', 'pheochromocytoma',
+  // Pregnancy / reproductive (genuine risk categories)
+  'pregnancy', 'breastfeeding',
+  // Alcohol (genuine drug interaction)
+  'alcohol',
 ];
 
 function extractText(label) {
