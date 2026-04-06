@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DrugCheck – FDA Drug Safety Comparison Tool</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="container header-inner">
+      <div class="logo">DrugCheck <span>/ FDA Safety Comparison</span></div>
+      <p class="tagline">Compare two drugs using live FDA data &mdash; labeling, recalls, and reported side effects.</p>
+    </div>
+  </header>
+
+  <!-- ── Disclaimer banner ── -->
+  <div class="disclaimer-banner">
+    <strong>Educational Use Only.</strong>
+    This tool is not a substitute for professional medical advice.
+    Always consult your doctor or pharmacist before making any decisions about your medications.
+  </div>
+
+  <!-- ── Main ── -->
+  <main>
+    <div class="container">
+
+      <!-- Drug search panel -->
+      <section class="search-panel" aria-label="Drug search">
+
+        <!-- Drug A -->
+        <div class="search-box" id="search-box-a">
+          <div class="search-box-label">Drug A</div>
+          <div class="search-row">
+            <label for="search-a" class="visually-hidden">Search Drug A</label>
+            <input
+              id="search-a"
+              class="search-input"
+              type="search"
+              placeholder="Brand or generic name…"
+              autocomplete="off"
+              aria-label="Search for Drug A"
+              aria-autocomplete="list"
+              aria-controls="autocomplete-a"
+            />
+            <button class="search-btn" id="search-btn-a" aria-label="Search Drug A">Search</button>
+          </div>
+          <div id="autocomplete-a" class="autocomplete hidden" role="listbox" aria-label="Drug A suggestions"></div>
+          <div id="chip-a" class="drug-chip hidden" aria-live="polite"></div>
+        </div>
+
+        <!-- Drug B -->
+        <div class="search-box" id="search-box-b">
+          <div class="search-box-label">Drug B</div>
+          <div class="search-row">
+            <label for="search-b" class="visually-hidden">Search Drug B</label>
+            <input
+              id="search-b"
+              class="search-input"
+              type="search"
+              placeholder="Brand or generic name…"
+              autocomplete="off"
+              aria-label="Search for Drug B"
+              aria-autocomplete="list"
+              aria-controls="autocomplete-b"
+            />
+            <button class="search-btn" id="search-btn-b" aria-label="Search Drug B">Search</button>
+          </div>
+          <div id="autocomplete-b" class="autocomplete hidden" role="listbox" aria-label="Drug B suggestions"></div>
+          <div id="chip-b" class="drug-chip hidden" aria-live="polite"></div>
+        </div>
+
+      </section>
+
+      <!-- Comparison dashboard -->
+      <section id="dashboard" class="hidden" aria-label="Drug comparison results">
+        <div class="dashboard-grid">
+
+          <!-- Drug A column -->
+          <div class="drug-column">
+            <div class="drug-col-header">Drug A</div>
+
+            <article class="card" aria-label="Drug A labeling information">
+              <div class="card-header">&#128203; Drug Label</div>
+              <div class="card-body" data-card="a-label">
+                <div class="card-placeholder">Search for a drug above to see label information.</div>
+              </div>
+            </article>
+
+            <article class="card" aria-label="Drug A recall history">
+              <div class="card-header">&#9888; Recall History</div>
+              <div class="card-body" data-card="a-recalls">
+                <div class="card-placeholder">Search for a drug above to see recall information.</div>
+              </div>
+            </article>
+
+            <article class="card" aria-label="Drug A reported side effects">
+              <div class="card-header">
+                &#128203; Reported Side Effects
+                <button class="tooltip-btn" data-tooltip="adverse-events" aria-label="What are reported side effects?" type="button" style="margin-left:auto">?</button>
+              </div>
+              <div class="card-body" data-card="a-reactions">
+                <div class="card-placeholder">Search for a drug above to see side effect data.</div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Drug B column -->
+          <div class="drug-column">
+            <div class="drug-col-header">Drug B</div>
+
+            <article class="card" aria-label="Drug B labeling information">
+              <div class="card-header">&#128203; Drug Label</div>
+              <div class="card-body" data-card="b-label">
+                <div class="card-placeholder">Search for a drug above to see label information.</div>
+              </div>
+            </article>
+
+            <article class="card" aria-label="Drug B recall history">
+              <div class="card-header">&#9888; Recall History</div>
+              <div class="card-body" data-card="b-recalls">
+                <div class="card-placeholder">Search for a drug above to see recall information.</div>
+              </div>
+            </article>
+
+            <article class="card" aria-label="Drug B reported side effects">
+              <div class="card-header">
+                &#128203; Reported Side Effects
+                <button class="tooltip-btn" data-tooltip="adverse-events" aria-label="What are reported side effects?" type="button" style="margin-left:auto">?</button>
+              </div>
+              <div class="card-body" data-card="b-reactions">
+                <div class="card-placeholder">Search for a drug above to see side effect data.</div>
+              </div>
+            </article>
+          </div>
+
+        </div><!-- .dashboard-grid -->
+
+        <!-- Overlap analysis panel -->
+        <section id="overlap-panel" class="hidden" aria-label="Overlap analysis" aria-live="polite">
+          <!-- filled by JS -->
+        </section>
+
+      </section><!-- #dashboard -->
+
+    </div><!-- .container -->
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-section-title">Disclaimer</div>
+          <p>
+            This tool is intended for <strong style="color:#fff">educational purposes only</strong>
+            and does not constitute medical advice, diagnosis, or treatment.
+            Drug information shown here is derived from publicly available FDA data and may be incomplete.
+            Always consult a licensed healthcare professional before starting, stopping, or changing any medication.
+          </p>
+        </div>
+        <div>
+          <div class="footer-section-title">Data &amp; Attribution</div>
+          <p>
+            Data provided by <a href="https://open.fda.gov" target="_blank" rel="noopener">openFDA</a>.
+            This product uses the openFDA API but is not endorsed by or affiliated with the
+            U.S. Food and Drug Administration.
+          </p>
+          <p style="margin-top:.75rem">
+            <a href="https://open.fda.gov/apis/authentication/" target="_blank" rel="noopener">Get a free API key</a>
+            &nbsp;&middot;&nbsp;
+            <a href="https://open.fda.gov/terms/" target="_blank" rel="noopener">openFDA Terms of Service</a>
+          </p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; 2024 DrugCheck &mdash; Educational use only. Not affiliated with the FDA.
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
