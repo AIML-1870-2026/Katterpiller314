@@ -103,7 +103,7 @@ function recallClassBadge(cls) {
   return `<span class="recall-class ${css}">${esc(cls || '—')}</span>`;
 }
 
-function renderRecallsCard(recalls, drugName) {
+function renderRecallsCard(recalls) {
   if (!recalls || recalls.length === 0) {
     return `<div class="no-recalls">&#10003; No recalls on record for this drug.</div>`;
   }
@@ -136,7 +136,7 @@ function renderRecallsCard(recalls, drugName) {
   `).join('<hr class="recall-divider">');
 }
 
-function renderReactionsCard(reactions, drugName) {
+function renderReactionsCard(reactions) {
   if (!reactions || reactions.length === 0) {
     return `<div class="no-data">No reported side effect data available for the last 3 years.</div>`;
   }
@@ -169,7 +169,6 @@ function renderReactionsCard(reactions, drugName) {
 
 function renderOverlap(overlap, nameA, nameB) {
   const { sharedWarnings, sharedIngredients, sharedReactions, severity } = overlap;
-  const { shared: warnTerms } = sharedWarnings;
 
   const sevClass = { high: 'sev-high', moderate: 'sev-mod', low: 'sev-low' }[severity];
   const sevIcon  = { high: '⚠', moderate: '⚠', low: '✓' }[severity];
@@ -195,17 +194,30 @@ function renderOverlap(overlap, nameA, nameB) {
   html += `</div>`;
 
   // Shared warnings
+  const serious = sharedWarnings.serious || [];
+  const allWarnTerms = sharedWarnings.shared || [];
+  const generalOnly = allWarnTerms.filter((w) => !serious.includes(w));
+
   html += `<div class="overlap-section">
     <div class="overlap-section-title">Shared Warnings &amp; Contraindications</div>`;
-  if (warnTerms.length) {
-    html += `<ul class="overlap-list ${sharedWarnings.hasSerious ? 'sev-high-text' : 'sev-mod-text'}">` +
-      warnTerms.map((w) => `<li>${esc(w)}</li>`).join('') +
-      `</ul>`;
-    if (sharedWarnings.hasSerious) {
-      html += `<p class="overlap-note">⚠ One or more shared warnings relate to serious health risks. Discuss with your healthcare provider.</p>`;
+  if (allWarnTerms.length) {
+    if (serious.length) {
+      html += `<p class="overlap-note" style="margin-bottom:.4rem">⚠ Serious shared concerns:</p>
+        <ul class="overlap-list sev-high-text">` +
+        serious.map((w) => `<li>${esc(w)}</li>`).join('') +
+        `</ul>`;
+    }
+    if (generalOnly.length) {
+      html += `<p style="font-size:.8rem;color:var(--text-muted);margin:${serious.length ? '.6rem' : '0'} 0 .25rem">General shared warnings:</p>
+        <ul class="overlap-list sev-mod-text">` +
+        generalOnly.map((w) => `<li>${esc(w)}</li>`).join('') +
+        `</ul>`;
+    }
+    if (serious.length) {
+      html += `<p class="overlap-note" style="margin-top:.5rem">Discuss these overlapping risks with your healthcare provider before taking both drugs.</p>`;
     }
   } else {
-    html += `<span class="sev-low-text">✓ No significant shared warning keywords found.</span>`;
+    html += `<span class="sev-low-text">✓ No significant shared warning concepts found.</span>`;
   }
   html += `</div>`;
 
@@ -271,7 +283,7 @@ async function loadDrug(side, drugName) {
   try {
     const recalls = await getRecalls(drugName);
     state[side].recalls = recalls;
-    setCardContent(side, 'recalls', renderRecallsCard(recalls, drugName));
+    setCardContent(side, 'recalls', renderRecallsCard(recalls));
   } catch (e) {
     setCardContent(side, 'recalls', errorHTML(e.message, drugName));
   }
@@ -279,7 +291,7 @@ async function loadDrug(side, drugName) {
   try {
     const reactions = await getAdverseEvents(drugName);
     state[side].reactions = reactions;
-    setCardContent(side, 'reactions', renderReactionsCard(reactions, drugName));
+    setCardContent(side, 'reactions', renderReactionsCard(reactions));
   } catch (e) {
     setCardContent(side, 'reactions', errorHTML(e.message, drugName));
   }
