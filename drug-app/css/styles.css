@@ -212,6 +212,15 @@ main {
 .ac-brand { font-weight: 600; }
 .ac-generic { color: var(--text-muted); font-size: .85em; }
 .ac-empty { color: var(--text-muted); font-style: italic; cursor: default; }
+.ac-section-label {
+  padding: .35rem 1rem .2rem;
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+  pointer-events: none;
+}
 
 /* ── Dashboard ───────────────────────────────────────────────────────────────── */
 #dashboard { margin-top: 1rem; }

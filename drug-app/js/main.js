@@ -337,6 +337,31 @@ function clearDrug(side) {
   document.getElementById('overlap-panel').classList.add('hidden');
 }
 
+// ── Common drugs shown before anything is typed ───────────────────────────────
+
+const COMMON_DRUGS = [
+  { brand: 'Advil',      generic: 'ibuprofen' },
+  { brand: 'Tylenol',    generic: 'acetaminophen' },
+  { brand: 'Lipitor',    generic: 'atorvastatin' },
+  { brand: 'Zoloft',     generic: 'sertraline' },
+  { brand: 'Metformin',  generic: 'metformin' },
+  { brand: 'Lisinopril', generic: 'lisinopril' },
+  { brand: 'Amoxicillin',generic: 'amoxicillin' },
+  { brand: 'Xanax',      generic: 'alprazolam' },
+  { brand: 'Synthroid',  generic: 'levothyroxine' },
+  { brand: 'Aspirin',    generic: 'aspirin' },
+];
+
+function renderItems(results) {
+  return results.map((r) => {
+    const display = r.brand && r.generic && r.brand.toLowerCase() !== r.generic.toLowerCase()
+      ? `<span class="ac-brand">${esc(r.brand)}</span> <span class="ac-generic">(${esc(r.generic)})</span>`
+      : `<span class="ac-brand">${esc(r.brand || r.generic)}</span>`;
+    const val = r.brand || r.generic;
+    return `<div class="ac-item" tabindex="0" data-value="${esc(val)}">${display}</div>`;
+  }).join('');
+}
+
 // ── Autocomplete ──────────────────────────────────────────────────────────────
 
 function buildAutoComplete(side) {
@@ -344,10 +369,16 @@ function buildAutoComplete(side) {
   const dropdown = document.getElementById(`autocomplete-${side}`);
   const btn = document.getElementById(`search-btn-${side}`);
 
+  function showCommon() {
+    dropdown.innerHTML =
+      `<div class="ac-section-label">Common drugs</div>` +
+      renderItems(COMMON_DRUGS);
+    dropdown.classList.remove('hidden');
+  }
+
   const doSearch = debounce(async (query) => {
     if (!query || query.trim().length < 2) {
-      dropdown.innerHTML = '';
-      dropdown.classList.add('hidden');
+      showCommon();
       return;
     }
     try {
@@ -357,13 +388,7 @@ function buildAutoComplete(side) {
         dropdown.classList.remove('hidden');
         return;
       }
-      dropdown.innerHTML = results.map((r) => {
-        const display = r.brand
-          ? `<span class="ac-brand">${esc(r.brand)}</span>${r.generic ? ` <span class="ac-generic">(${esc(r.generic)})</span>` : ''}`
-          : `<span class="ac-brand">${esc(r.generic)}</span>`;
-        const val = r.brand || r.generic;
-        return `<div class="ac-item" tabindex="0" data-value="${esc(val)}">${display}</div>`;
-      }).join('');
+      dropdown.innerHTML = renderItems(results);
       dropdown.classList.remove('hidden');
     } catch {
       dropdown.innerHTML = '';
@@ -371,6 +396,7 @@ function buildAutoComplete(side) {
     }
   }, 400);
 
+  input.addEventListener('focus', () => { if (!input.value.trim()) showCommon(); });
   input.addEventListener('input', () => doSearch(input.value));
 
   function selectDrug(name) {
