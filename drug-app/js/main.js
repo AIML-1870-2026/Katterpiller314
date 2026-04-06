@@ -165,39 +165,131 @@ function renderReactionsCard(reactions) {
     ${bars}`;
 }
 
+// ── Natural-language "can they be taken together?" summary ────────────────────
+
+function formatDrugName(searchName, label) {
+  const brand   = label?.openfda?.brand_name?.[0]   || null;
+  const generic = label?.openfda?.generic_name?.[0] || null;
+  if (brand && generic && brand.toLowerCase() !== generic.toLowerCase()) {
+    // Put the name the user searched for first
+    if (searchName.toLowerCase() === (generic || '').toLowerCase()) {
+      return `${generic} (${brand})`;
+    }
+    return `${brand} (${generic})`;
+  }
+  return brand || generic || searchName;
+}
+
+function seriousWarningNote(warning) {
+  const w = warning.toLowerCase();
+  if (w.includes('liver') || w.includes('hepat')) {
+    return 'Both drugs can stress the liver — your doctor may want to monitor liver function if you take them together.';
+  }
+  if (w.includes('bleed') || w.includes('hemorrhage')) {
+    return 'Both carry bleeding warnings. Report any unusual bruising or bleeding to your doctor right away.';
+  }
+  if (w.includes('serotonin')) {
+    return 'Both drugs affect serotonin levels. Taking them together can sometimes cause serotonin syndrome — watch for agitation, rapid heartbeat, or confusion.';
+  }
+  if (w.includes('seizure') || w.includes('convulsion')) {
+    return 'Both have warnings related to seizures — this combination may lower the seizure threshold and requires closer monitoring.';
+  }
+  if (w.includes('respiratory') || w.includes('breathing')) {
+    return 'Both can slow breathing. Avoid alcohol and other sedating drugs while taking them together.';
+  }
+  if (w.includes('cardiac') || w.includes('heart') || w.includes('arrhythmia') || w.includes('qt')) {
+    return 'Both carry heart-rhythm warnings. Your doctor may want to monitor your heart if you take them together.';
+  }
+  if (w.includes('kidney') || w.includes('renal')) {
+    return 'Both drugs can affect kidney function — stay well hydrated and report any changes in urination.';
+  }
+  if (w.includes('suicid')) {
+    return 'Both carry warnings about suicidal thoughts. Contact a healthcare provider immediately if you notice worsening depression or mood changes.';
+  }
+  if (w.includes('blood clot') || w.includes('thrombosis')) {
+    return 'Both carry blood clot warnings. Report leg pain, swelling, or shortness of breath to a doctor immediately.';
+  }
+  if (w.includes('anaphylax') || w.includes('severe allergic')) {
+    return 'Both carry severe allergic reaction warnings. Seek emergency help if you experience hives, swelling, or trouble breathing.';
+  }
+  if (w.includes('fatal') || w.includes('death') || w.includes('life-threatening')) {
+    return 'Both carry life-threatening risk warnings. Do not combine without explicit guidance from your doctor.';
+  }
+  return null;
+}
+
+function buildNaturalSummary(severity, nameA, nameB, labelA, labelB, overlap) {
+  const { sharedWarnings, sharedIngredients, sharedReactions } = overlap;
+  const dispA = formatDrugName(nameA, labelA);
+  const dispB = formatDrugName(nameB, labelB);
+  const notes = [];
+
+  let headline;
+  if (severity === 'low') {
+    headline = `Yes, you can generally take ${dispA} with ${dispB}.`;
+    notes.push('No major overlapping risks were found in FDA safety data.');
+    notes.push('As always, confirm with your doctor or pharmacist before combining any medications.');
+  } else if (severity === 'moderate') {
+    headline = `${dispA} and ${dispB} can often be taken together, but there are some overlapping risks to know about.`;
+  } else {
+    headline = `Use caution before taking ${dispA} and ${dispB} together.`;
+  }
+
+  // Shared ingredient note
+  if (sharedIngredients.length > 0) {
+    const ing = sharedIngredients[0];
+    notes.push(`They share the active ingredient <strong>${esc(ing)}</strong> — taking both at the same time could mean a double dose. Check with your pharmacist about safe dosing.`);
+  }
+
+  // Serious warning notes (up to 2)
+  const serious = sharedWarnings.serious || [];
+  for (const w of serious.slice(0, 2)) {
+    const note = seriousWarningNote(w);
+    if (note) notes.push(note);
+  }
+
+  // General warning note (1 mention if no serious ones)
+  if (serious.length === 0 && (sharedWarnings.shared || []).length > 0) {
+    const top = sharedWarnings.shared[0];
+    notes.push(`Both drugs have warnings related to <strong>${esc(top)}</strong> — let your doctor know if this applies to you.`);
+  }
+
+  // Shared side effects note
+  if (sharedReactions.length >= 2) {
+    const rxList = sharedReactions.slice(0, 3).map((r) => r.toLowerCase()).join(', ');
+    notes.push(`Both are frequently associated with ${esc(rxList)} — these effects may be more pronounced when taken together.`);
+  }
+
+  // Closing advice for non-low severity
+  if (severity !== 'low') {
+    notes.push(severity === 'high'
+      ? '<strong>Speak with your doctor before combining these medications.</strong>'
+      : 'Ask your pharmacist whether it\'s safe to take them at the same time.');
+  }
+
+  return { headline, dispA, dispB, notes };
+}
+
 // ── Overlap panel ─────────────────────────────────────────────────────────────
 
-function renderOverlap(overlap, nameA, nameB) {
+function renderOverlap(overlap, nameA, nameB, labelA = {}, labelB = {}) {
   const { sharedWarnings, sharedIngredients, sharedReactions, severity } = overlap;
 
-  const togetherSummary = {
-    high: {
-      icon: '⚠',
-      heading: 'Use caution — talk to a professional first.',
-      body: `These two drugs share significant overlapping risks in FDA data. <strong>Do not start, stop, or combine medications without speaking to your doctor or pharmacist.</strong>`,
-      cls: 'together-high',
-    },
-    moderate: {
-      icon: '⚡',
-      heading: 'Possibly, but be aware of shared risks.',
-      body: `These drugs have some overlapping warnings or side effects. It\'s a good idea to ask your pharmacist whether it\'s safe to take them at the same time.`,
-      cls: 'together-mod',
-    },
-    low: {
-      icon: '✓',
-      heading: 'No major overlapping risks found.',
-      body: `FDA data shows no significant shared warnings, ingredients, or side effects between these two drugs. As always, confirm with your healthcare provider before combining medications.`,
-      cls: 'together-low',
-    },
-  }[severity];
+  const { headline, notes } = buildNaturalSummary(severity, nameA, nameB, labelA, labelB, overlap);
+
+  const boxCls = { high: 'together-high', moderate: 'together-mod', low: 'together-low' }[severity];
+  const icon   = { high: '⚠', moderate: '⚡', low: '✓' }[severity];
+
+  const notesHtml = notes.length
+    ? `<ul class="together-notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul>`
+    : '';
 
   let html = `
-    <div class="together-box ${togetherSummary.cls}">
-      <div class="together-icon">${togetherSummary.icon}</div>
+    <div class="together-box ${boxCls}">
+      <div class="together-icon">${icon}</div>
       <div class="together-text">
-        <div class="together-question">Can <strong>${esc(nameA)}</strong> and <strong>${esc(nameB)}</strong> be taken together?</div>
-        <div class="together-heading">${togetherSummary.heading}</div>
-        <div class="together-body">${togetherSummary.body}</div>
+        <div class="together-headline">${headline}</div>
+        ${notesHtml}
       </div>
     </div>
     <h3 class="overlap-detail-heading">Details</h3>`;
@@ -332,7 +424,7 @@ function maybeRunOverlap() {
 
   const overlap = analyzeOverlap(labelA, labelB, reactA, reactB);
   const panel = document.getElementById('overlap-panel');
-  panel.innerHTML = renderOverlap(overlap, a.name, b.name);
+  panel.innerHTML = renderOverlap(overlap, a.name, b.name, labelA, labelB);
   panel.classList.remove('hidden');
   refreshTooltips(panel);
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
