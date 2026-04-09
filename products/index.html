@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Review Generator</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* ── Custom Properties ── */
+    :root {
+      --color-bg:           #fdf4e3;
+      --color-surface:      #f5e9cc;
+      --color-border:       #c8a97e;
+      --color-text:         #3b2a1a;
+      --color-text-muted:   #7a5c3c;
+      --color-accent:       #c0392b;
+      --color-accent-hover: #96281b;
+      --color-forest:       #7b9e6b;
+      --color-gold:         #b8860b;
+    }
+
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1rem;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 28px,
+          rgba(184,134,11,0.04) 28px,
+          rgba(184,134,11,0.04) 29px
+        );
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Page wrapper ── */
+    .page {
+      width: 100%;
+      max-width: 680px;
+      padding: 2rem 1.5rem 3rem;
+      flex: 1;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .app-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: 2rem;
+      color: var(--color-accent);
+      letter-spacing: 0.03em;
+      line-height: 1.2;
+    }
+
+    .app-subtitle {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      color: var(--color-text-muted);
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .ftc-banner {
+      margin-top: 1rem;
+      padding: 0.65rem 1rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-left: 4px solid var(--color-gold);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      font-style: italic;
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    /* ── Key Loader ── */
+    .key-loader {
+      margin-bottom: 1.5rem;
+      padding: 0.9rem 1rem;
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .key-loader label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+
+    .key-loader input[type="file"] {
+      display: none;
+    }
+
+    .btn-upload {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 0.85rem;
+      border: 1.5px solid var(--color-border);
+      border-radius: 6px;
+      background: var(--color-bg);
+      color: var(--color-text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-upload:hover { background: var(--color-surface); border-color: var(--color-accent); }
+
+    .key-status {
+      font-size: 0.82rem;
+      font-style: italic;
+      color: var(--color-text-muted);
+    }
+    .key-status.loaded { color: var(--color-forest); font-style: normal; font-weight: 500; }
+
+    /* ── Form Card ── */
+    .form-card {
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: 12px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.06);
+      padding: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      font-family: 'Lora', serif;
+      font-size: 0.97rem;
+      color: var(--color-text);
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      border-radius: 7px;
+      padding: 0.55rem 0.8rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a5c3c' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.12);
+    }
+
+    /* ── Length Pills ── */
+    .pill-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .pill {
+      flex: 1;
+      font-family: 'Cinzel', serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-align: center;
+      padding: 0.5rem 0.5rem;
+      border: 1.5px solid var(--color-border);
+      border-radius: 999px;
+      background: var(--color-bg);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+
+    .pill:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+    }
+
+    .pill.active {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: #fff;
+    }
+
+    .pill-sub {
+      display: block;
+      font-family: 'Lora', serif;
+      font-size: 0.7rem;
+      font-style: italic;
+      letter-spacing: 0;
+      opacity: 0.8;
+      margin-top: 0.1rem;
+    }
+
+    /* ── Generate Button ── */
+    .btn-generate {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.85rem 1rem;
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #fff;
+      background: var(--color-accent);
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.12s;
+    }
+    .btn-generate:hover:not(:disabled) {
+      background: var(--color-accent-hover);
+      transform: scale(1.01);
+    }
+    .btn-generate:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* ── Output Area ── */
+    .output-wrapper {
+      margin-top: 2rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+    }
+    .output-wrapper.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .output-heading {
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .btn-copy {
+      font-family: 'Lora', serif;
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--color-forest);
+      background: none;
+      border: 1px solid var(--color-forest);
+      border-radius: 5px;
+      padding: 0.25rem 0.6rem;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .btn-copy:hover { background: var(--color-forest); color: #fff; }
+
+    .output-scroll {
+      background: var(--color-bg);
+      border: 2px solid var(--color-border);
+      border-top: 3px solid var(--color-gold);
+      border-radius: 10px;
+      padding: 1.5rem 1.75rem;
+      min-height: 80px;
+      font-family: 'Lora', serif;
+      font-size: 1rem;
+      line-height: 1.75;
+      color: var(--color-text);
+    }
+
+    .output-scroll p { margin-bottom: 1em; }
+    .output-scroll p:last-child { margin-bottom: 0; }
+    .output-scroll strong { font-weight: 700; }
+    .output-scroll em { font-style: italic; }
+
+    /* ── Loading ── */
+    .loading-text {
+      font-style: italic;
+      color: var(--color-text-muted);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.45; }
+    }
+
+    /* ── Error ── */
+    .error-box {
+      padding: 0.75rem 1rem;
+      background: #fff5f5;
+      border: 1.5px solid var(--color-accent);
+      border-radius: 7px;
+      color: var(--color-accent);
+      font-size: 0.9rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      width: 100%;
+      max-width: 680px;
+      padding: 1rem 1.5rem 2rem;
+      border-top: 1px solid var(--color-border);
+      text-align: center;
+    }
+
+    .footer-disclaimer {
+      font-family: 'Lora', serif;
+      font-size: 0.75rem;
+      font-style: italic;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .form-card { padding: 1.5rem; }
+      .app-title { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <header>
+    <h1 class="app-title">&#x2767; Review Scribe &#x2767;</h1>
+    <p class="app-subtitle">Craft a product review with the wisdom of the scroll</p>
+    <div class="ftc-banner">
+      <strong>Educational &amp; Creative Use Only.</strong> Per the FTC rule effective October&nbsp;21,&nbsp;2024,
+      publishing AI-generated reviews as genuine consumer reviews is prohibited and carries civil penalties up to
+      <strong>$51,744 per violation</strong>. Do not submit generated content as a real review.
+    </div>
+  </header>
+
+  <!-- API Key Loader -->
+  <div class="key-loader">
+    <label for="env-file-input">OpenAI Key:</label>
+    <button class="btn-upload" onclick="document.getElementById('env-file-input').click()">
+      Load .env File
+    </button>
+    <input type="file" id="env-file-input" accept=".env,text/plain" />
+    <span class="key-status" id="key-status">No key loaded</span>
+  </div>
+
+  <!-- Form -->
+  <form class="form-card" id="review-form" onsubmit="handleSubmit(event)">
+
+    <!-- Product Name -->
+    <div class="form-group">
+      <label class="form-label" for="product-name">Product Name</label>
+      <input
+        type="text"
+        id="product-name"
+        placeholder='e.g. "Sony WH-1000XM5"'
+        required
+      />
+    </div>
+
+    <!-- Product Category -->
+    <div class="form-group">
+      <label class="form-label" for="product-category">Product Category</label>
+      <select id="product-category" required>
+        <option value="" disabled selected>Select a category&hellip;</option>
+        <option>Electronics</option>
+        <option>Home &amp; Kitchen</option>
+        <option>Beauty &amp; Personal Care</option>
+        <option>Clothing &amp; Accessories</option>
+        <option>Sports &amp; Outdoors</option>
+        <option>Books &amp; Media</option>
+        <option>Toys &amp; Games</option>
+        <option>Food &amp; Beverage</option>
+        <option>Software / App</option>
+        <option value="__other__">Other&hellip;</option>
+      </select>
+    </div>
+
+    <!-- Category Other -->
+    <div class="form-group" id="category-other-group" style="display:none; margin-top:-0.75rem;">
+      <label class="form-label" for="category-other">Specify Category</label>
+      <input type="text" id="category-other" placeholder="Enter category" />
+    </div>
+
+    <!-- Tone -->
+    <div class="form-group">
+      <label class="form-label" for="tone">Tone</label>
+      <select id="tone" required>
+        <option value="" disabled selected>Select a tone&hellip;</option>
+        <option>Formal</option>
+        <option>Conversational</option>
+        <option>Enthusiastic</option>
+        <option>Analytical</option>
+        <option>Humorous</option>
+        <option>Sarcastic</option>
+      </select>
+    </div>
+
+    <!-- Overall Sentiment -->
+    <div class="form-group">
+      <label class="form-label" for="sentiment">Overall Sentiment</label>
+      <select id="sentiment" required onchange="updateSentimentDetail()">
+        <option value="" disabled selected>Select sentiment&hellip;</option>
+        <option>Positive</option>
+        <option>Neutral</option>
+        <option>Negative</option>
+      </select>
+    </div>
+
+    <!-- Sentiment Detail -->
+    <div class="form-group">
+      <label class="form-label" for="sentiment-detail">Sentiment Detail</label>
+      <select id="sentiment-detail" required>
+        <option value="" disabled selected>Select overall sentiment first&hellip;</option>
+      </select>
+    </div>
+
+    <!-- Review Length -->
+    <div class="form-group">
+      <label class="form-label">Review Length</label>
+      <div class="pill-group" id="length-pills">
+        <div class="pill active" data-length="Short (~100 words)" onclick="selectLength(this)">
+          Short
+          <span class="pill-sub">~100 words</span>
+        </div>
+        <div class="pill" data-length="Medium (~250 words)" onclick="selectLength(this)">
+          Medium
+          <span class="pill-sub">~250 words</span>
+        </div>
+        <div class="pill" data-length="Long (~500 words)" onclick="selectLength(this)">
+          Long
+          <span class="pill-sub">~500 words</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Comments -->
+    <div class="form-group">
+      <label class="form-label" for="comments">Additional Comments <span style="font-style:italic;text-transform:none;letter-spacing:0;">(optional)</span></label>
+      <textarea
+        id="comments"
+        placeholder="Any specific features to highlight, complaints to include, context about usage, etc."
+      ></textarea>
+    </div>
+
+    <!-- Model Selector -->
+    <div class="form-group">
+      <label class="form-label" for="model">Model</label>
+      <select id="model" required>
+        <option value="gpt-4.1">GPT-4.1</option>
+        <option value="gpt-4.1-mini">GPT-4.1 mini</option>
+        <option value="gpt-4o">GPT-4o</option>
+        <option value="gpt-4o-mini">GPT-4o mini</option>
+      </select>
+    </div>
+
+    <!-- Generate Button -->
+    <button type="submit" class="btn-generate" id="generate-btn">
+      &#x2728; Generate Review
+    </button>
+
+  </form>
+
+  <!-- Output -->
+  <div class="output-wrapper" id="output-wrapper">
+    <div class="output-header">
+      <span class="output-heading">&#x1F4DC; The Scroll Speaks</span>
+      <button class="btn-copy" id="copy-btn" onclick="copyToClipboard()">Copy Text</button>
+    </div>
+    <div class="output-scroll" id="output-scroll"></div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <p class="footer-disclaimer">
+    This tool is for educational and creative-exploration purposes only. Per the FTC rule effective October&nbsp;21,&nbsp;2024,
+    publishing AI-generated reviews as genuine consumer reviews is prohibited and carries civil penalties up to $51,744 per violation.
+    Do not submit generated content as a real review.
+  </p>
+</footer>
+
+<script>
+  /* ── State ── */
+  let apiKey = null;
+
+  const SENTIMENT_DETAILS = {
+    Positive: ['Enthusiastic', 'Cautiously Positive', 'Pleasantly Surprised', 'Loyalist'],
+    Neutral:  ['Mixed', 'Balanced & Objective', 'Disappointed but Fair'],
+    Negative: ['Mildly Critical', 'Strongly Critical', 'Frustrated', 'Disappointed'],
+  };
+
+  /* ── .env file loading ── */
+  document.getElementById('env-file-input').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (evt) {
+      const text = evt.target.result;
+      const match = text.match(/^OPENAI_API_KEY\s*=\s*(.+)$/m);
+      if (match) {
+        apiKey = match[1].trim().replace(/^['"]|['"]$/g, '');
+        const status = document.getElementById('key-status');
+        status.textContent = 'Key loaded \u2713';
+        status.className = 'key-status loaded';
+      } else {
+        apiKey = null;
+        const status = document.getElementById('key-status');
+        status.textContent = 'No OPENAI_API_KEY found in file';
+        status.className = 'key-status';
+      }
+    };
+    reader.readAsText(file);
+    // Reset so same file can be reloaded
+    e.target.value = '';
+  });
+
+  /* ── Category "Other" toggle ── */
+  document.getElementById('product-category').addEventListener('change', function () {
+    const otherGroup = document.getElementById('category-other-group');
+    if (this.value === '__other__') {
+      otherGroup.style.display = 'block';
+      document.getElementById('category-other').required = true;
+    } else {
+      otherGroup.style.display = 'none';
+      document.getElementById('category-other').required = false;
+    }
+  });
+
+  /* ── Sentiment Detail update ── */
+  function updateSentimentDetail() {
+    const sentiment = document.getElementById('sentiment').value;
+    const detailSelect = document.getElementById('sentiment-detail');
+    detailSelect.innerHTML = '';
+    const opts = SENTIMENT_DETAILS[sentiment] || [];
+    opts.forEach((opt, i) => {
+      const el = document.createElement('option');
+      el.value = opt;
+      el.textContent = opt;
+      if (i === 0) el.selected = true;
+      detailSelect.appendChild(el);
+    });
+  }
+
+  /* ── Length pill toggle ── */
+  function selectLength(el) {
+    document.querySelectorAll('#length-pills .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* ── Markdown → HTML ── */
+  function renderMarkdown(text) {
+    // Split into paragraphs on double newlines
+    const paragraphs = text.split(/\n{2,}/);
+    return paragraphs
+      .map(p => {
+        let html = p.trim();
+        if (!html) return '';
+        // Bold: **text**
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // Italic: *text* or _text_
+        html = html.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+        html = html.replace(/_([^_\n]+?)_/g, '<em>$1</em>');
+        // Single newlines → <br>
+        html = html.replace(/\n/g, '<br>');
+        return `<p>${html}</p>`;
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  /* ── Strip HTML for clipboard ── */
+  function stripHtml(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  }
+
+  /* ── Copy to clipboard ── */
+  function copyToClipboard() {
+    const html = document.getElementById('output-scroll').innerHTML;
+    const text = stripHtml(html);
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      const prev = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = prev; }, 1800);
+    }).catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = stripHtml(html);
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    });
+  }
+
+  /* ── Show output area ── */
+  function showOutput(html) {
+    const wrapper = document.getElementById('output-wrapper');
+    document.getElementById('output-scroll').innerHTML = html;
+    wrapper.classList.add('visible');
+  }
+
+  /* ── Show error ── */
+  function showError(msg) {
+    showOutput(`<div class="error-box">&#x26A0; ${msg}</div>`);
+  }
+
+  /* ── Loading state ── */
+  function setLoading(isLoading) {
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = isLoading;
+    btn.textContent = isLoading ? 'Consulting the scroll\u2026' : '\u2728 Generate Review';
+  }
+
+  /* ── Build prompts ── */
+  function buildPrompts(fields) {
+    const system = `You are a product review writer. Generate a realistic, well-written product review based on the user's inputs. Write in plain prose — no bullet lists, no headers, no JSON. Output clean markdown (bold for emphasis where appropriate, paragraph breaks for readability). Do not break character. Do not mention that you are an AI.`;
+
+    const user =
+`Product Name: ${fields.productName}
+Category: ${fields.category}
+Tone: ${fields.tone}
+Overall Sentiment: ${fields.sentiment}
+Sentiment Detail: ${fields.sentimentDetail}
+Length: ${fields.length}
+Additional Notes: ${fields.comments || 'None provided'}
+
+Write a product review for this product based on the above parameters.`;
+
+    return { system, user };
+  }
+
+  /* ── Main submit handler ── */
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!apiKey) {
+      alert('Please load your .env file with OPENAI_API_KEY first.');
+      return;
+    }
+
+    // Gather form values
+    const catRaw = document.getElementById('product-category').value;
+    const category = catRaw === '__other__'
+      ? document.getElementById('category-other').value.trim()
+      : catRaw;
+
+    const activePill = document.querySelector('#length-pills .pill.active');
+    const length = activePill ? activePill.dataset.length : 'Medium (~250 words)';
+
+    const fields = {
+      productName:    document.getElementById('product-name').value.trim(),
+      category,
+      tone:           document.getElementById('tone').value,
+      sentiment:      document.getElementById('sentiment').value,
+      sentimentDetail:document.getElementById('sentiment-detail').value,
+      length,
+      comments:       document.getElementById('comments').value.trim(),
+      model:          document.getElementById('model').value,
+    };
+
+    // Validate dependent fields
+    if (!fields.category) {
+      alert('Please specify a category.');
+      return;
+    }
+    if (!fields.sentimentDetail) {
+      alert('Please select an overall sentiment first.');
+      return;
+    }
+
+    const { system, user } = buildPrompts(fields);
+
+    setLoading(true);
+    showOutput('<span class="loading-text">Consulting the scroll\u2026</span>');
+
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: fields.model,
+          stream: true,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user',   content: user   },
+          ],
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: { message: res.statusText } }));
+        throw new Error(err.error?.message || 'OpenAI API error');
+      }
+
+      // Stream response
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          const json = line.slice(6);
+          if (json === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(json);
+            const delta = parsed.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              fullText += delta;
+              // Re-render on each chunk
+              showOutput(renderMarkdown(fullText));
+            }
+          } catch (_) { /* ignore partial JSON */ }
+        }
+      }
+
+      // Final render (ensures clean output)
+      showOutput(renderMarkdown(fullText));
+
+    } catch (err) {
+      showError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  }
+</script>
+</body>
+</html>
