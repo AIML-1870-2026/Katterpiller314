@@ -129,12 +129,6 @@
     }
     .btn-upload:hover { background: var(--color-surface); border-color: var(--color-accent); }
 
-    .pill-key.active {
-      background: var(--color-accent);
-      border-color: var(--color-accent);
-      color: #fff;
-    }
-
     .key-status {
       font-size: 0.82rem;
       font-style: italic;
@@ -393,15 +387,12 @@
 
   <!-- API Key Loader -->
   <div class="key-loader">
-    <label>OpenAI Key:</label>
-    <button class="btn-upload pill-key active" id="btn-default-key" onclick="useDefaultKey()">
-      Use Default Key
-    </button>
-    <button class="btn-upload pill-key" id="btn-custom-key" onclick="document.getElementById('env-file-input').click()">
+    <label for="env-file-input">OpenAI Key:</label>
+    <button class="btn-upload" onclick="document.getElementById('env-file-input').click()">
       Load .env File
     </button>
     <input type="file" id="env-file-input" accept=".env,text/plain" />
-    <span class="key-status loaded" id="key-status">Default key active ✓</span>
+    <span class="key-status" id="key-status">No key loaded</span>
   </div>
 
   <!-- Form -->
@@ -543,20 +534,7 @@
 
 <script>
   /* ── State ── */
-  const _dk = 'c2stcHJvai12ejlBTWl2ZFN1RHU0b3ZmUklNWG9HMG9rdl8wREtsbE1iS2sz' +
-              'c1d0NHRxb3JpaXlCM1JUeFpaMU1qZDYySndVdVNDS0FvSFk3dVQzQmxia0ZK' +
-              'ekVXaWc5dzhnYm1UcTZpMGFnQUhWTEZtRUpIaU9SUzBJX1RZX1hPZDJ4X2Jo' +
-              'OVJJc3RzYW1hR3JPRktTUl9PWlBmakFlZDlHb0E=';
-  let apiKey = atob(_dk);
-
-  function useDefaultKey() {
-    apiKey = atob(_dk);
-    document.getElementById('btn-default-key').classList.add('active');
-    document.getElementById('btn-custom-key').classList.remove('active');
-    const status = document.getElementById('key-status');
-    status.textContent = 'Default key active \u2713';
-    status.className = 'key-status loaded';
-  }
+  let apiKey = null;
 
   const SENTIMENT_DETAILS = {
     Positive: ['Enthusiastic', 'Cautiously Positive', 'Pleasantly Surprised', 'Loyalist'],
@@ -575,12 +553,11 @@
       const status = document.getElementById('key-status');
       if (match) {
         apiKey = match[1].trim().replace(/^['"]|['"]$/g, '');
-        document.getElementById('btn-custom-key').classList.add('active');
-        document.getElementById('btn-default-key').classList.remove('active');
-        status.textContent = 'Custom key loaded \u2713';
+        status.textContent = 'Key loaded \u2713';
         status.className = 'key-status loaded';
       } else {
-        status.textContent = 'No OPENAI_API_KEY found in file \u2014 using default';
+        apiKey = null;
+        status.textContent = 'No OPENAI_API_KEY found in file';
         status.className = 'key-status';
       }
     };
@@ -709,6 +686,11 @@ Write a product review for this product based on the above parameters.`;
   /* ── Main submit handler ── */
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (!apiKey) {
+      alert('Please load your .env file with OPENAI_API_KEY first.');
+      return;
+    }
 
     // Gather form values
     const catRaw = document.getElementById('product-category').value;
