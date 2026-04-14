@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Science Experiment Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary:    #0a0e1a;
+      --bg-surface:    #111827;
+      --bg-elevated:   #1c2333;
+      --accent-primary:#e8610a;
+      --accent-warm:   #f59e0b;
+      --accent-glow:   rgba(232,97,10,0.15);
+      --text-primary:  #f0f4ff;
+      --text-muted:    #7a8aaa;
+      --navy-mid:      #1e2d45;
+      --easy:  #22c55e;
+      --medium:#f59e0b;
+      --hard:  #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ─────────────────────────────── */
+    header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--navy-mid);
+      padding: 20px 32px;
+      box-shadow: 0 4px 32px var(--accent-glow);
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header h1 span { color: var(--accent-primary); }
+
+    /* ── Layout ──────────────────────────────── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 16px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--navy-mid);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 0 32px var(--accent-glow);
+    }
+
+    .panel-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--navy-mid);
+      margin: 20px 0;
+    }
+
+    /* ── API toggle ──────────────────────────── */
+    .api-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: none;
+      border: 1px solid var(--navy-mid);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .api-toggle:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+    .api-toggle:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+    .api-toggle .chevron { transition: transform .25s ease; display: inline-block; }
+    .api-toggle.open .chevron { transform: rotate(180deg); }
+
+    .api-body { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--navy-mid); }
+    .api-body.open { display: block; }
+
+    /* ── Form fields ─────────────────────────── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+
+    select,
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--navy-mid);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8aaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+    select option { background: var(--bg-elevated); }
+    select:focus,
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    select:focus-visible,
+    input:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+    select:disabled { opacity: .4; cursor: not-allowed; }
+
+    .key-note { font-size: .73rem; color: var(--text-muted); margin-top: 6px; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── Preset chips ────────────────────────── */
+    .preset-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+
+    .preset-chip {
+      background: var(--bg-elevated);
+      border: 1px solid var(--navy-mid);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: .78rem;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s, box-shadow .2s, background .2s;
+      user-select: none;
+    }
+    .preset-chip:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+    .preset-chip:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+    .preset-chip.active {
+      background: var(--accent-glow);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* ── Supply input + tags ─────────────────── */
+    .supply-input-row { display: flex; gap: 8px; margin-top: 10px; }
+    .supply-input-row input { flex: 1; }
+
+    .supply-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+    .tag {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--accent-primary);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: .8rem;
+      padding: 4px 10px;
+    }
+    .tag button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+      transition: color .2s;
+    }
+    .tag button:hover { color: var(--accent-primary); }
+    .tag button:focus-visible { outline: 2px solid var(--accent-primary); }
+
+    /* ── Buttons ─────────────────────────────── */
+    .btn-primary {
+      background: var(--accent-primary);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: .9rem;
+      font-weight: 600;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: background .2s, box-shadow .2s, transform .15s;
+      box-shadow: 0 0 20px var(--accent-glow);
+      width: 100%;
+      margin-top: 20px;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #f07020;
+      box-shadow: 0 0 32px rgba(232,97,10,.35);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled { opacity: .38; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-primary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      border: 1px solid var(--navy-mid);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: .82rem;
+      font-weight: 500;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+      white-space: nowrap;
+    }
+    .btn-secondary:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+    .btn-secondary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+    /* ── Validation / Error ──────────────────── */
+    .validation-msg { font-size: .8rem; color: #fca5a5; margin-top: 8px; display: none; }
+
+    .error-card {
+      display: none;
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.4);
+      border-radius: 8px;
+      padding: 16px 20px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .error-card p { color: #fca5a5; font-size: .88rem; flex: 1; }
+
+    /* ── Loading shimmer ─────────────────────── */
+    .shimmer {
+      background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-elevated) 50%, var(--bg-surface) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+      border-radius: 8px;
+      height: 320px;
+      border: 1px solid var(--navy-mid);
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Experiment output ───────────────────── */
+    .exp-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .exp-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.25rem, 3vw, 1.6rem);
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .badge {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 4px 12px;
+      border-radius: 4px;
+      border: 1px solid;
+      white-space: nowrap;
+      flex-shrink: 0;
+      align-self: flex-start;
+    }
+    .badge-easy   { color: var(--easy);   border-color: var(--easy);   background: rgba(34,197,94,.1);  box-shadow: 0 0 8px rgba(34,197,94,.25); }
+    .badge-medium { color: var(--medium); border-color: var(--medium); background: rgba(245,158,11,.1); box-shadow: 0 0 8px rgba(245,158,11,.25); }
+    .badge-hard   { color: var(--hard);   border-color: var(--hard);   background: rgba(239,68,68,.1);  box-shadow: 0 0 8px rgba(239,68,68,.25); }
+
+    .safety-banner {
+      border-left: 4px solid var(--accent-warm);
+      background: rgba(245,158,11,.07);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: .84rem;
+      color: #fbbf24;
+      line-height: 1.55;
+    }
+
+    .exp-section { margin-bottom: 24px; }
+
+    .section-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--accent-primary);
+      margin-bottom: 10px;
+    }
+
+    .exp-section p { font-size: .93rem; color: var(--text-primary); line-height: 1.7; }
+
+    /* Materials */
+    .mat-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--navy-mid);
+      gap: 8px;
+    }
+    .mat-item:last-of-type { border-bottom: none; }
+    .mat-name { font-size: .9rem; color: var(--text-primary); }
+
+    .sub-btn {
+      background: none;
+      border: 1px solid var(--navy-mid);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: .7rem;
+      padding: 3px 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color .2s, color .2s;
+    }
+    .sub-btn:hover { border-color: var(--accent-warm); color: var(--accent-warm); }
+    .sub-btn:focus-visible { outline: 2px solid var(--accent-warm); outline-offset: 2px; }
+
+    /* Substitution panel */
+    .sub-panel {
+      display: none;
+      background: var(--bg-elevated);
+      border: 1px solid var(--accent-warm);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 4px 0 8px;
+    }
+    .sub-note { font-size: .8rem; color: var(--accent-warm); margin-bottom: 10px; }
+    .sub-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--navy-mid);
+      gap: 8px;
+    }
+    .sub-option:last-child { border-bottom: none; }
+    .sub-option-name { font-size: .85rem; color: var(--text-primary); }
+    .use-btn {
+      background: var(--accent-warm);
+      border: none;
+      border-radius: 4px;
+      color: #0a0e1a;
+      font-family: 'Inter', sans-serif;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+    .use-btn:hover { background: #fbbf24; }
+    .use-btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+    .sub-loading { color: var(--text-muted); font-size: .8rem; font-style: italic; }
+
+    /* Instructions */
+    .step-list { list-style: none; counter-reset: steps; padding: 0; }
+    .step-list li {
+      counter-increment: steps;
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--navy-mid);
+      font-size: .93rem;
+      line-height: 1.65;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-list li::before {
+      content: counter(steps);
+      background: var(--accent-primary);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 700;
+      border-radius: 50%;
+      min-width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* PDF row */
+    .pdf-row {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 20px;
+      margin-top: 4px;
+      border-top: 1px solid var(--navy-mid);
+    }
+
+    /* ── Responsive ──────────────────────────── */
+    @media (max-width: 520px) {
+      main   { padding: 16px 10px 48px; }
+      header { padding: 16px; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Science <span>Experiment</span> Generator</h1>
+</header>
+
+<main>
+
+  <!-- ── Form Panel ─────────────────────────────── -->
+  <div class="panel">
+
+    <!-- API Settings -->
+    <button class="api-toggle" id="api-toggle" type="button" aria-expanded="false">
+      <span>⚙ API Settings</span>
+      <span class="chevron">▾</span>
+    </button>
+    <div class="api-body" id="api-body">
+      <div class="field">
+        <label for="api-key-input" id="api-key-label">API Key</label>
+        <input type="password" id="api-key-input" placeholder="Paste your API key here…" autocomplete="off">
+        <p class="key-note">Your key is used only for this session and is never stored.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Provider + Model -->
+    <div class="field">
+      <div class="two-col">
+        <div>
+          <label for="provider-select">Provider</label>
+          <select id="provider-select">
+            <option value="">— Select Provider —</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </div>
+        <div>
+          <label for="model-select">Model</label>
+          <select id="model-select" disabled>
+            <option value="">— Select Model —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grade Level -->
+    <div class="field">
+      <label for="grade-select">Grade Level</label>
+      <select id="grade-select">
+        <option value="">— Select Grade Level —</option>
+        <option value="K-2">K–2 (Ages 5–8)</option>
+        <option value="3-5">3–5 (Ages 8–11)</option>
+        <option value="6-8">6–8 (Ages 11–14)</option>
+        <option value="9-12">9–12 (Ages 14–18)</option>
+      </select>
+    </div>
+
+    <!-- Preset chips -->
+    <div class="field">
+      <label>Common Supplies — click to add</label>
+      <div class="preset-grid" id="preset-grid"></div>
+    </div>
+
+    <!-- Custom supply entry -->
+    <div class="field">
+      <label for="supply-input">Add a Custom Supply</label>
+      <div class="supply-input-row">
+        <input type="text" id="supply-input" placeholder="e.g. rubber bands, thermometer…" maxlength="80">
+        <button class="btn-secondary" id="supply-add-btn" type="button">Add</button>
+      </div>
+    </div>
+
+    <!-- Unified tag list -->
+    <div id="tags-wrap" style="display:none">
+      <label>Your Supplies</label>
+      <div class="supply-tags" id="supply-tags"></div>
+    </div>
+
+    <p class="validation-msg" id="validation-msg"></p>
+
+    <button class="btn-primary" id="generate-btn" type="button">Generate Experiment</button>
+  </div>
+
+  <!-- ── Error card ──────────────────────────────── -->
+  <div class="error-card" id="error-card" role="alert">
+    <p id="error-text"></p>
+    <button class="btn-secondary" id="retry-btn" type="button">Retry</button>
+  </div>
+
+  <!-- ── Loading shimmer ────────────────────────── -->
+  <div id="loading-wrap" style="display:none">
+    <div class="shimmer"></div>
+  </div>
+
+  <!-- ── Output panel ───────────────────────────── -->
+  <div class="panel" id="output-panel" style="display:none">
+    <div id="experiment-output"></div>
+    <div class="pdf-row">
+      <button class="btn-secondary" id="pdf-btn" type="button">⬇ Export as PDF</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONFIG
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const MODELS = {
+  openai: [
+    { id: 'gpt-4o',           label: 'GPT-4o' },
+    { id: 'gpt-4o-mini',      label: 'GPT-4o Mini' },
+    { id: 'gpt-4-turbo',      label: 'GPT-4 Turbo' },
+    { id: 'gpt-3.5-turbo',    label: 'GPT-3.5 Turbo' },
+  ],
+  anthropic: [
+    { id: 'claude-opus-4-5',           label: 'Claude Opus 4' },
+    { id: 'claude-sonnet-4-5',         label: 'Claude Sonnet 4' },
+    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4' },
+  ],
+};
+
+const PRESETS = [
+  'Baking soda','Vinegar','Water','Salt','Sugar','Food coloring',
+  'Balloons','String','Paper','Cardboard','Ruler','Magnifying glass',
+  'Magnets','Plastic bottles','Rubber bands','Straws','Tape',
+  'Aluminum foil','Paper clips','Sand','Soil','Seeds','Ice',
+  'Cooking oil','Dish soap','Cornstarch','Flour','Yeast',
+  'Lemon juice','Baking powder','Flashlight','Mirrors','Toothpicks',
+  'Clay','Cotton balls','Scissors','Marker',
+];
+
+const SYSTEM_PROMPT = `You are a science experiment designer for educators. Generate safe, engaging, grade-appropriate science experiments based on available supplies.
+
+Rules:
+- Always assign a difficulty label: Easy, Medium, or Hard.
+- Never suggest experiments involving open flames for grades K-5.
+- Never suggest experiments with toxic, caustic, or dangerous chemicals for any grade.
+- If an experiment cannot be made safe, refuse and suggest a safer alternative.
+- Flag any step requiring adult supervision with "[Adult supervision required]".
+- Return your response using exactly these labeled sections with no extra text before TITLE:
+
+TITLE:
+DIFFICULTY: [Easy/Medium/Hard]
+OBJECTIVE:
+MATERIALS:
+INSTRUCTIONS:
+WHATS_HAPPENING:
+CLEANUP_AND_SAFETY:`;
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// STATE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const apiKeys = { openai: '', anthropic: '' };
+let supplies = [];
+let currentExp = null;
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DOM REFS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const $ = id => document.getElementById(id);
+const apiToggle      = $('api-toggle');
+const apiBody        = $('api-body');
+const apiKeyInput    = $('api-key-input');
+const apiKeyLabel    = $('api-key-label');
+const providerSelect = $('provider-select');
+const modelSelect    = $('model-select');
+const gradeSelect    = $('grade-select');
+const presetGrid     = $('preset-grid');
+const supplyInput    = $('supply-input');
+const supplyAddBtn   = $('supply-add-btn');
+const tagsWrap       = $('tags-wrap');
+const supplyTags     = $('supply-tags');
+const validationMsg  = $('validation-msg');
+const generateBtn    = $('generate-btn');
+const errorCard      = $('error-card');
+const errorText      = $('error-text');
+const retryBtn       = $('retry-btn');
+const loadingWrap    = $('loading-wrap');
+const outputPanel    = $('output-panel');
+const expOutput      = $('experiment-output');
+const pdfBtn         = $('pdf-btn');
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// .ENV LOADING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function loadEnvKeys() {
+  try {
+    const res = await fetch('.env');
+    if (!res.ok) return;
+    const text = await res.text();
+    const flag = text.match(/^USE_ENV_KEYS\s*=\s*(.+)$/im);
+    if (flag && flag[1].trim().toLowerCase() === 'false') return;
+    const oa = text.match(/^OPENAI_API_KEY\s*=\s*(.+)$/im);
+    const aa = text.match(/^ANTHROPIC_API_KEY\s*=\s*(.+)$/im);
+    if (oa) apiKeys.openai    = oa[1].trim().replace(/^['"]|['"]$/g, '');
+    if (aa) apiKeys.anthropic = aa[1].trim().replace(/^['"]|['"]$/g, '');
+    syncKeyField();
+  } catch (_) { /* silently fail — .env may not exist */ }
+}
+
+function syncKeyField() {
+  const p = providerSelect.value;
+  if (p && apiKeys[p]) apiKeyInput.value = apiKeys[p];
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PROVIDER / MODEL
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+providerSelect.addEventListener('change', () => {
+  const p = providerSelect.value;
+  modelSelect.disabled = !p;
+  modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+  if (p && MODELS[p]) {
+    MODELS[p].forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.label;
+      modelSelect.appendChild(opt);
+    });
+  }
+  if (p) {
+    apiKeyLabel.textContent  = p === 'openai' ? 'OpenAI API Key' : 'Anthropic API Key';
+    apiKeyInput.placeholder  = p === 'openai' ? 'sk-…' : 'sk-ant-…';
+    apiKeyInput.value        = apiKeys[p] || '';
+  }
+});
+
+apiKeyInput.addEventListener('input', () => {
+  const p = providerSelect.value;
+  if (p) apiKeys[p] = apiKeyInput.value;
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// API SETTINGS TOGGLE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+apiToggle.addEventListener('click', () => {
+  const open = apiBody.classList.toggle('open');
+  apiToggle.classList.toggle('open', open);
+  apiToggle.setAttribute('aria-expanded', open);
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PRESET CHIPS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRESETS.forEach(name => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'preset-chip';
+  btn.textContent = name;
+  btn.dataset.preset = name.toLowerCase();
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('active')) {
+      btn.classList.remove('active');
+      removeSupply(name);
+    } else {
+      btn.classList.add('active');
+      addSupply(name);
+    }
+  });
+  presetGrid.appendChild(btn);
+});
+
+function getPresetChip(name) {
+  return presetGrid.querySelector(`[data-preset="${name.toLowerCase()}"]`);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUPPLY MANAGEMENT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function addSupply(name) {
+  const s = name.trim();
+  if (!s) return;
+  if (supplies.some(x => x.toLowerCase() === s.toLowerCase())) return;
+  supplies.push(s);
+  renderTags();
+}
+
+function removeSupply(name) {
+  supplies = supplies.filter(s => s.toLowerCase() !== name.toLowerCase());
+  const chip = getPresetChip(name);
+  if (chip) chip.classList.remove('active');
+  renderTags();
+}
+
+function renderTags() {
+  supplyTags.innerHTML = '';
+  tagsWrap.style.display = supplies.length ? 'block' : 'none';
+  supplies.forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'tag';
+    const span = document.createElement('span');
+    span.textContent = name;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', `Remove ${name}`);
+    btn.textContent = '×';
+    btn.addEventListener('click', () => removeSupply(name));
+    div.appendChild(span);
+    div.appendChild(btn);
+    supplyTags.appendChild(div);
+  });
+}
+
+supplyAddBtn.addEventListener('click', addFromInput);
+supplyInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFromInput(); } });
+function addFromInput() {
+  addSupply(supplyInput.value);
+  supplyInput.value = '';
+  supplyInput.focus();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LLM API CALLS  (adapted from Switch/src/lib/llm.js)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function callOpenAI({ apiKey, model, prompt, systemPrompt }) {
+  const messages = [];
+  if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+  messages.push({ role: 'user', content: prompt });
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({ model, messages }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: { message: res.statusText } }));
+    throw new Error(err.error?.message || `OpenAI error (${res.status})`);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+async function callAnthropic({ apiKey, model, prompt, systemPrompt }) {
+  const body = { model, max_tokens: 4096, messages: [{ role: 'user', content: prompt }] };
+  if (systemPrompt) body.system = systemPrompt;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: { message: res.statusText } }));
+    throw new Error(err.error?.message || `Anthropic error (${res.status})`);
+  }
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+function callLLM(opts) {
+  if (opts.provider === 'openai')    return callOpenAI(opts);
+  if (opts.provider === 'anthropic') return callAnthropic(opts);
+  throw new Error('Unknown provider');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PARSING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SECTION_KEYS = ['TITLE','DIFFICULTY','OBJECTIVE','MATERIALS','INSTRUCTIONS','WHATS_HAPPENING','CLEANUP_AND_SAFETY'];
+
+function parseExperiment(text) {
+  const exp = {};
+  for (let i = 0; i < SECTION_KEYS.length; i++) {
+    const key  = SECTION_KEYS[i];
+    const next = SECTION_KEYS[i + 1];
+    const re   = next
+      ? new RegExp(`${key}:\\s*([\\s\\S]*?)(?=\\n${next}:)`, 'i')
+      : new RegExp(`${key}:\\s*([\\s\\S]*)`, 'i');
+    const m = text.match(re);
+    exp[key] = m ? m[1].trim() : '';
+  }
+  return exp;
+}
+
+function parseBullets(text) {
+  return text.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+}
+
+function parseSteps(text) {
+  return text.split('\n').map(l => l.replace(/^\d+[.)]\s*/, '').trim()).filter(Boolean);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// RENDER EXPERIMENT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function badgeClass(d) {
+  const s = (d || '').toLowerCase();
+  return s.includes('easy') ? 'badge-easy' : s.includes('hard') ? 'badge-hard' : 'badge-medium';
+}
+function badgeLabel(d) {
+  const s = (d || '').toLowerCase();
+  return s.includes('easy') ? 'Easy' : s.includes('hard') ? 'Hard' : 'Medium';
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderExperiment(exp) {
+  currentExp = exp;
+  const materials    = parseBullets(exp.MATERIALS || '');
+  const instructions = parseSteps(exp.INSTRUCTIONS || '');
+
+  // Build materials rows
+  const matsHTML = materials.map((mat, i) => `
+    <div class="mat-item" data-index="${i}">
+      <span class="mat-name">${esc(mat)}</span>
+      <button class="sub-btn" type="button" data-index="${i}" data-name="${esc(mat)}">Substitute</button>
+    </div>
+    <div class="sub-panel" id="sub-${i}"></div>
+  `).join('');
+
+  // Build steps
+  const stepsHTML = instructions.map(s => `<li>${esc(s)}</li>`).join('');
+
+  expOutput.innerHTML = `
+    <div class="exp-header">
+      <h2 class="exp-title">${esc(exp.TITLE || 'Experiment')}</h2>
+      <span class="badge ${badgeClass(exp.DIFFICULTY)}">${badgeLabel(exp.DIFFICULTY)}</span>
+    </div>
+
+    <div class="safety-banner">
+      ⚠️ <strong>Safety Reminder:</strong> Always review this experiment before conducting it with students.
+      Verify that all materials and steps are appropriate for your setting and student age group.
+      Adult supervision is recommended.
+    </div>
+
+    <div class="exp-section">
+      <div class="section-label">Objective</div>
+      <p>${esc(exp.OBJECTIVE || '')}</p>
+    </div>
+
+    <div class="exp-section">
+      <div class="section-label">Materials</div>
+      <div id="mats-list">${matsHTML}</div>
+    </div>
+
+    <div class="exp-section">
+      <div class="section-label">Instructions</div>
+      <ol class="step-list">${stepsHTML}</ol>
+    </div>
+
+    <div class="exp-section">
+      <div class="section-label">What's Happening?</div>
+      <p>${esc(exp.WHATS_HAPPENING || '')}</p>
+    </div>
+
+    <div class="exp-section">
+      <div class="section-label">Cleanup &amp; Safety Notes</div>
+      <p>${esc(exp.CLEANUP_AND_SAFETY || '')}</p>
+    </div>
+  `;
+
+  // Attach substitute button listeners
+  expOutput.querySelectorAll('.sub-btn').forEach(btn => {
+    btn.addEventListener('click', () => openSubPanel(
+      parseInt(btn.dataset.index, 10),
+      btn.dataset.name
+    ));
+  });
+
+  outputPanel.style.display = 'block';
+  outputPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUBSTITUTION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function openSubPanel(index, matName) {
+  const panel = $(`sub-${index}`);
+  if (!panel) return;
+
+  // Toggle off if already showing content for this material
+  if (panel.style.display === 'block') {
+    panel.style.display = 'none';
+    return;
+  }
+
+  panel.style.display = 'block';
+  panel.innerHTML = `<div class="sub-panel"><p class="sub-loading">Finding substitutes…</p></div>`;
+
+  const p = providerSelect.value;
+  const m = modelSelect.value;
+  const subPrompt = `I am doing this experiment: ${currentExp.TITLE}
+I don't have: ${matName}
+Suggest 2-3 common household substitutes that would work for the same experiment.
+Return only a JSON array of substitute names, no explanation.`;
+
+  try {
+    const raw   = await callLLM({ provider: p, model: m, apiKey: apiKeys[p], prompt: subPrompt });
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('Could not parse substitute list');
+    const subs = JSON.parse(match[0]);
+
+    const optionsHTML = subs.map(sub => `
+      <div class="sub-option">
+        <span class="sub-option-name">${esc(sub)}</span>
+        <button class="use-btn" type="button" data-original="${esc(matName)}" data-sub="${esc(sub)}" data-panel="${index}">
+          Use this instead
+        </button>
+      </div>
+    `).join('');
+
+    panel.innerHTML = `
+      <div class="sub-panel">
+        <p class="sub-note">Don't have <strong>${esc(matName)}</strong>? Try one of these:</p>
+        ${optionsHTML}
+      </div>
+    `;
+
+    panel.querySelectorAll('.use-btn').forEach(btn => {
+      btn.addEventListener('click', () =>
+        useSubstitute(btn.dataset.original, btn.dataset.sub, parseInt(btn.dataset.panel, 10))
+      );
+    });
+  } catch (err) {
+    panel.innerHTML = `<div class="sub-panel"><p class="sub-note" style="color:#fca5a5">Error: ${esc(err.message)}</p></div>`;
+  }
+}
+
+async function useSubstitute(original, substitute, panelIndex) {
+  // Swap in supplies list
+  const idx = supplies.findIndex(s => s.toLowerCase() === original.toLowerCase());
+  if (idx !== -1) supplies[idx] = substitute;
+  else supplies.push(substitute);
+  renderTags();
+
+  // Sync preset chips
+  const oldChip = getPresetChip(original);
+  if (oldChip) oldChip.classList.remove('active');
+  const newChip = getPresetChip(substitute);
+  if (newChip) newChip.classList.add('active');
+
+  // Close panel
+  const panel = $(`sub-${panelIndex}`);
+  if (panel) panel.style.display = 'none';
+
+  // Regenerate
+  await generateExperiment();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// VALIDATE + GENERATE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function showValidation(msg) {
+  validationMsg.textContent = msg;
+  validationMsg.style.display = 'block';
+  clearTimeout(showValidation._t);
+  showValidation._t = setTimeout(() => { validationMsg.style.display = 'none'; }, 5000);
+}
+
+function validate() {
+  const p = providerSelect.value;
+  const m = modelSelect.value;
+  const g = gradeSelect.value;
+  if (!p || !m) { showValidation('Please select a provider and model.'); return false; }
+  if (!g)       { showValidation('Please select a grade level.'); return false; }
+  if (!supplies.length) { showValidation('Please add at least one supply.'); return false; }
+  if (!(apiKeys[p] || '').trim()) {
+    showValidation('Please enter your API key in the API Settings panel.');
+    if (!apiBody.classList.contains('open')) {
+      apiBody.classList.add('open');
+      apiToggle.classList.add('open');
+      apiToggle.setAttribute('aria-expanded', 'true');
+    }
+    return false;
+  }
+  return true;
+}
+
+let lastGenArgs = null;
+
+async function generateExperiment() {
+  if (!validate()) return;
+
+  const provider = providerSelect.value;
+  const model    = modelSelect.value;
+  const grade    = gradeSelect.value;
+  const apiKey   = apiKeys[provider];
+  const prompt   = `Grade level: ${grade}\nAvailable supplies: ${supplies.join(', ')}\n\nGenerate one science experiment using only the supplies listed (or a subset of them).`;
+
+  lastGenArgs = { provider, model, grade, apiKey, prompt };
+
+  errorCard.style.display  = 'none';
+  outputPanel.style.display = 'none';
+  loadingWrap.style.display = 'block';
+  generateBtn.disabled = true;
+
+  try {
+    const raw = await callLLM({ provider, model, apiKey, prompt, systemPrompt: SYSTEM_PROMPT });
+    const exp = parseExperiment(raw);
+    loadingWrap.style.display = 'none';
+    generateBtn.disabled = false;
+    renderExperiment(exp);
+  } catch (err) {
+    loadingWrap.style.display = 'none';
+    generateBtn.disabled = false;
+    errorText.textContent    = err.message || 'Something went wrong.';
+    errorCard.style.display  = 'flex';
+    errorCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+generateBtn.addEventListener('click', generateExperiment);
+retryBtn.addEventListener('click', () => { if (lastGenArgs) generateExperiment(); });
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PDF EXPORT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+pdfBtn.addEventListener('click', () => {
+  if (!currentExp || !window.jspdf) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageW  = doc.internal.pageSize.getWidth();
+  const pageH  = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const maxW   = pageW - margin * 2;
+  let y = 20;
+
+  const date  = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  const model = modelSelect.value;
+
+  function write(text, { size = 11, bold = false, rgb = [20,20,20], gap = 5 } = {}) {
+    doc.setFontSize(size);
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setTextColor(...rgb);
+    const lines = doc.splitTextToSize(String(text), maxW);
+    const lineH = size * 0.42;
+    if (y + lines.length * lineH > pageH - 16) { doc.addPage(); y = 20; }
+    doc.text(lines, margin, y);
+    y += lines.length * lineH + gap;
+  }
+
+  function section(title, body) {
+    write(title, { size: 9, bold: true, rgb: [180,80,20], gap: 2 });
+    write(body,  { size: 10, gap: 9 });
+  }
+
+  write('Science Experiment Generator', { size: 18, bold: true, gap: 3 });
+  write(`${date}  ·  Model: ${model}`,  { size: 8,  rgb: [120,120,120], gap: 10 });
+
+  write(currentExp.TITLE || 'Experiment', { size: 15, bold: true, gap: 3 });
+  write(`Difficulty: ${badgeLabel(currentExp.DIFFICULTY)}`, { size: 9, bold: true, gap: 10 });
+
+  write('⚠ Safety Reminder', { size: 9, bold: true, rgb: [160,110,0], gap: 2 });
+  write('Always review this experiment before conducting it with students. Verify all materials and steps are appropriate for your setting and student age group. Adult supervision is recommended.',
+        { size: 9, rgb: [120,90,0], gap: 10 });
+
+  section('OBJECTIVE', currentExp.OBJECTIVE || '');
+
+  write('MATERIALS', { size: 9, bold: true, rgb: [180,80,20], gap: 2 });
+  parseBullets(currentExp.MATERIALS || '').forEach(m => write(`• ${m}`, { size: 10, gap: 2 }));
+  y += 6;
+
+  write('INSTRUCTIONS', { size: 9, bold: true, rgb: [180,80,20], gap: 2 });
+  parseSteps(currentExp.INSTRUCTIONS || '').forEach((s, i) => write(`${i+1}. ${s}`, { size: 10, gap: 2 }));
+  y += 6;
+
+  section("WHAT'S HAPPENING?", currentExp.WHATS_HAPPENING || '');
+  section('CLEANUP & SAFETY NOTES', currentExp.CLEANUP_AND_SAFETY || '');
+
+  // Footer on every page
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(160,160,160);
+    doc.text(`Science Experiment Generator  ·  ${date}  ·  Model: ${model}  ·  Page ${i} of ${pageCount}`,
+             margin, pageH - 8);
+  }
+
+  const slug = (currentExp.TITLE || 'experiment').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  doc.save(`experiment-${slug}-${new Date().toISOString().slice(0,10)}.pdf`);
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+loadEnvKeys();
+</script>
+</body>
+</html>
