@@ -478,7 +478,6 @@
           <select id="provider-select">
             <option value="">— Select Provider —</option>
             <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic</option>
           </select>
         </div>
         <div>
@@ -559,11 +558,6 @@ const MODELS = {
     { id: 'gpt-4o-mini',      label: 'GPT-4o Mini' },
     { id: 'gpt-4-turbo',      label: 'GPT-4 Turbo' },
     { id: 'gpt-3.5-turbo',    label: 'GPT-3.5 Turbo' },
-  ],
-  anthropic: [
-    { id: 'claude-opus-4-5',           label: 'Claude Opus 4' },
-    { id: 'claude-sonnet-4-5',         label: 'Claude Sonnet 4' },
-    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4' },
   ],
 };
 
@@ -799,8 +793,7 @@ async function callAnthropic({ apiKey, model, prompt, systemPrompt }) {
 }
 
 function callLLM(opts) {
-  if (opts.provider === 'openai')    return callOpenAI(opts);
-  if (opts.provider === 'anthropic') return callAnthropic(opts);
+  if (opts.provider === 'openai') return callOpenAI(opts);
   throw new Error('Unknown provider');
 }
 
