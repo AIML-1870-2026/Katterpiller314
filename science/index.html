@@ -347,57 +347,6 @@
     .mat-item:last-of-type { border-bottom: none; }
     .mat-name { font-size: .9rem; color: var(--text-primary); }
 
-    .sub-btn {
-      background: none;
-      border: 1px solid var(--navy-mid);
-      border-radius: 4px;
-      color: var(--text-muted);
-      font-family: 'Inter', sans-serif;
-      font-size: .7rem;
-      padding: 3px 8px;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: border-color .2s, color .2s;
-    }
-    .sub-btn:hover { border-color: var(--accent-warm); color: var(--accent-warm); }
-    .sub-btn:focus-visible { outline: 2px solid var(--accent-warm); outline-offset: 2px; }
-
-    /* Substitution panel */
-    .sub-panel {
-      display: none;
-      background: var(--bg-elevated);
-      border: 1px solid var(--accent-warm);
-      border-radius: 6px;
-      padding: 12px 16px;
-      margin: 4px 0 8px;
-    }
-    .sub-note { font-size: .8rem; color: var(--accent-warm); margin-bottom: 10px; }
-    .sub-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--navy-mid);
-      gap: 8px;
-    }
-    .sub-option:last-child { border-bottom: none; }
-    .sub-option-name { font-size: .85rem; color: var(--text-primary); }
-    .use-btn {
-      background: var(--accent-warm);
-      border: none;
-      border-radius: 4px;
-      color: #0a0e1a;
-      font-family: 'Inter', sans-serif;
-      font-size: .72rem;
-      font-weight: 700;
-      padding: 4px 10px;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: background .2s;
-    }
-    .use-btn:hover { background: #fbbf24; }
-    .use-btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
-    .sub-loading { color: var(--text-muted); font-size: .8rem; font-style: italic; }
 
     /* Instructions */
     .step-list { list-style: none; counter-reset: steps; padding: 0; }
@@ -771,26 +720,6 @@ async function callOpenAI({ apiKey, model, prompt, systemPrompt }) {
   return data.choices[0].message.content;
 }
 
-async function callAnthropic({ apiKey, model, prompt, systemPrompt }) {
-  const body = { model, max_tokens: 4096, messages: [{ role: 'user', content: prompt }] };
-  if (systemPrompt) body.system = systemPrompt;
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: { message: res.statusText } }));
-    throw new Error(err.error?.message || `Anthropic error (${res.status})`);
-  }
-  const data = await res.json();
-  return data.content[0].text;
-}
 
 function callLLM(opts) {
   if (opts.provider === 'openai') return callOpenAI(opts);
@@ -845,12 +774,10 @@ function renderExperiment(exp) {
   const instructions = parseSteps(exp.INSTRUCTIONS || '');
 
   // Build materials rows
-  const matsHTML = materials.map((mat, i) => `
-    <div class="mat-item" data-index="${i}">
+  const matsHTML = materials.map(mat => `
+    <div class="mat-item">
       <span class="mat-name">${esc(mat)}</span>
-      <button class="sub-btn" type="button" data-index="${i}" data-name="${esc(mat)}">Substitute</button>
     </div>
-    <div class="sub-panel" id="sub-${i}"></div>
   `).join('');
 
   // Build steps
@@ -894,93 +821,10 @@ function renderExperiment(exp) {
     </div>
   `;
 
-  // Attach substitute button listeners
-  expOutput.querySelectorAll('.sub-btn').forEach(btn => {
-    btn.addEventListener('click', () => openSubPanel(
-      parseInt(btn.dataset.index, 10),
-      btn.dataset.name
-    ));
-  });
-
   outputPanel.style.display = 'block';
   outputPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SUBSTITUTION
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async function openSubPanel(index, matName) {
-  const panel = $(`sub-${index}`);
-  if (!panel) return;
-
-  // Toggle off if already showing content for this material
-  if (panel.style.display === 'block') {
-    panel.style.display = 'none';
-    return;
-  }
-
-  panel.style.display = 'block';
-  panel.innerHTML = `<div class="sub-panel"><p class="sub-loading">Finding substitutes…</p></div>`;
-
-  const p = providerSelect.value;
-  const m = modelSelect.value;
-  const subPrompt = `I am doing this experiment: ${currentExp.TITLE}
-I don't have: ${matName}
-Suggest 2-3 common household substitutes that would work for the same experiment.
-Return only a JSON array of substitute names, no explanation.`;
-
-  try {
-    const raw   = await callLLM({ provider: p, model: m, apiKey: apiKeys[p], prompt: subPrompt });
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('Could not parse substitute list');
-    const subs = JSON.parse(match[0]);
-
-    const optionsHTML = subs.map(sub => `
-      <div class="sub-option">
-        <span class="sub-option-name">${esc(sub)}</span>
-        <button class="use-btn" type="button" data-original="${esc(matName)}" data-sub="${esc(sub)}" data-panel="${index}">
-          Use this instead
-        </button>
-      </div>
-    `).join('');
-
-    panel.innerHTML = `
-      <div class="sub-panel">
-        <p class="sub-note">Don't have <strong>${esc(matName)}</strong>? Try one of these:</p>
-        ${optionsHTML}
-      </div>
-    `;
-
-    panel.querySelectorAll('.use-btn').forEach(btn => {
-      btn.addEventListener('click', () =>
-        useSubstitute(btn.dataset.original, btn.dataset.sub, parseInt(btn.dataset.panel, 10))
-      );
-    });
-  } catch (err) {
-    panel.innerHTML = `<div class="sub-panel"><p class="sub-note" style="color:#fca5a5">Error: ${esc(err.message)}</p></div>`;
-  }
-}
-
-async function useSubstitute(original, substitute, panelIndex) {
-  // Swap in supplies list
-  const idx = supplies.findIndex(s => s.toLowerCase() === original.toLowerCase());
-  if (idx !== -1) supplies[idx] = substitute;
-  else supplies.push(substitute);
-  renderTags();
-
-  // Sync preset chips
-  const oldChip = getPresetChip(original);
-  if (oldChip) oldChip.classList.remove('active');
-  const newChip = getPresetChip(substitute);
-  if (newChip) newChip.classList.add('active');
-
-  // Close panel
-  const panel = $(`sub-${panelIndex}`);
-  if (panel) panel.style.display = 'none';
-
-  // Regenerate
-  await generateExperiment();
-}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // VALIDATE + GENERATE
