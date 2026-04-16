@@ -146,6 +146,39 @@
       transform: translateX(18px);
     }
 
+    /* ── Tab Bar ── */
+    #tab-bar {
+      position: fixed;
+      top: 58px; left: 0; right: 0;
+      height: 44px;
+      background: var(--ac-ui-bg);
+      border-bottom: 2px solid var(--ac-ui-border);
+      display: flex;
+      align-items: stretch;
+      padding: 0 20px;
+      gap: 4px;
+      z-index: 99;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 0 18px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--ac-ui-heading);
+      cursor: pointer;
+      transition: border-color 0.15s, opacity 0.15s;
+      opacity: 0.55;
+    }
+    .tab-btn:hover { opacity: 0.8; }
+    .tab-btn.active {
+      border-bottom-color: var(--ac-ui-accent);
+      opacity: 1;
+    }
+
     /* ── Canvas ── */
     #canvas-wrap {
       position: fixed;
@@ -158,6 +191,186 @@
       width: 100% !important;
       height: 100% !important;
     }
+
+    /* ── Tab Content (non-globe) ── */
+    #tab-content {
+      position: fixed;
+      top: 102px; left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+      background: linear-gradient(180deg, var(--ac-sky) 0%, var(--ac-dusk) 100%);
+      padding: 24px 28px;
+    }
+    #tab-content.active { display: block; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .section-wrap { margin-bottom: 32px; }
+
+    .section-heading {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--ac-ui-heading);
+      margin-bottom: 16px;
+    }
+
+    /* ── List Tab ── */
+    #neo-table-wrap {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 3px solid var(--ac-ui-border);
+      box-shadow: 0 4px 18px var(--ac-ui-shadow);
+      background: var(--ac-ui-bg);
+    }
+
+    #neo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    #neo-table thead th {
+      background: var(--ac-ui-bg);
+      color: var(--ac-ui-heading);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 2px solid var(--ac-ui-border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: background 0.1s;
+    }
+    #neo-table thead th:hover { background: var(--ac-sand); }
+    #neo-table thead th.sort-asc::after  { content: ' ▲'; font-size: 0.68em; }
+    #neo-table thead th.sort-desc::after { content: ' ▼'; font-size: 0.68em; }
+
+    #neo-table tbody tr {
+      border-bottom: 1px solid rgba(212,169,106,0.25);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    #neo-table tbody tr:hover { background: var(--ac-sand); }
+    #neo-table tbody tr.hazardous-row { background: rgba(255,107,107,0.05); }
+    #neo-table tbody tr.hazardous-row:hover { background: rgba(255,107,107,0.13); }
+
+    #neo-table tbody td {
+      padding: 11px 16px;
+      color: var(--ac-ui-text);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.81rem;
+    }
+
+    .haz-badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 0.73rem;
+      font-family: 'Varela Round', sans-serif;
+      font-weight: 700;
+      color: #fff;
+    }
+    .haz-badge.haz  { background: var(--ac-ui-accent); }
+    .haz-badge.safe { background: var(--ac-ui-safe); }
+
+    /* ── Stats Tab ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--ac-ui-bg);
+      border: 3px solid var(--ac-ui-border);
+      border-radius: 18px;
+      padding: 20px 22px;
+      box-shadow: 0 4px 14px var(--ac-ui-shadow);
+    }
+
+    .stat-card h3 {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.78rem;
+      color: var(--ac-ui-heading);
+      opacity: 0.7;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-big {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 2rem;
+      color: var(--ac-ui-heading);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-sub {
+      font-size: 0.78rem;
+      color: var(--ac-ui-text);
+      opacity: 0.65;
+    }
+
+    .bar-chart { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .bar-row   { display: flex; align-items: center; gap: 10px; }
+    .bar-label { font-size: 0.76rem; color: var(--ac-ui-heading); width: 76px; flex-shrink: 0; text-align: right; }
+    .bar-track { flex: 1; background: rgba(212,169,106,0.18); border-radius: 999px; height: 22px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 999px; display: flex; align-items: center; padding-left: 10px; min-width: 28px; transition: width 0.5s ease; }
+    .bar-count { font-size: 0.72rem; color: #fff; font-family: 'DM Mono', monospace; font-weight: 500; }
+
+    .highlight-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .highlight-card {
+      background: var(--ac-ui-bg);
+      border: 3px solid var(--ac-ui-border);
+      border-radius: 18px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 14px var(--ac-ui-shadow);
+    }
+    .highlight-card .hc-emoji  { font-size: 1.5rem; margin-bottom: 6px; }
+    .highlight-card .hc-label  { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.74rem; color: var(--ac-ui-heading); opacity: 0.65; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .highlight-card .hc-name   { font-size: 0.9rem; color: var(--ac-ui-heading); font-weight: 700; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .highlight-card .hc-val    { font-family: 'DM Mono', monospace; font-size: 0.81rem; color: var(--ac-ui-text); }
+
+    /* ── Forecast Tab ── */
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    .forecast-card {
+      background: var(--ac-ui-bg);
+      border: 3px solid var(--ac-ui-border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 4px 14px var(--ac-ui-shadow);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .forecast-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px var(--ac-ui-shadow); }
+    .forecast-card.has-haz { border-color: var(--ac-ui-accent); }
+    .forecast-card.is-today { background: var(--ac-sand); }
+
+    .fc-date       { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.05rem; color: var(--ac-ui-heading); margin-bottom: 2px; }
+    .fc-day        { font-size: 0.74rem; color: var(--ac-ui-heading); opacity: 0.58; margin-bottom: 14px; }
+    .fc-total      { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 2.2rem; color: var(--ac-ui-heading); line-height: 1; }
+    .fc-total-lbl  { font-size: 0.74rem; color: var(--ac-ui-text); opacity: 0.65; margin-bottom: 8px; }
+    .fc-haz        { font-size: 0.82rem; font-weight: 700; color: var(--ac-ui-accent); }
+    .fc-haz.none   { color: var(--ac-ui-safe); }
+    .fc-spinner    { font-size: 0.82rem; opacity: 0.5; font-style: italic; }
 
     /* ── Count Panel ── */
     #count-panel {
@@ -180,16 +393,8 @@
       margin-bottom: 6px;
     }
 
-    #count-total {
-      font-size: 0.9rem;
-      margin-bottom: 4px;
-    }
-
-    #count-haz {
-      font-size: 0.9rem;
-      color: var(--ac-ui-accent);
-      font-weight: 600;
-    }
+    #count-total { font-size: 0.9rem; margin-bottom: 4px; }
+    #count-haz   { font-size: 0.9rem; color: var(--ac-ui-accent); font-weight: 600; }
 
     /* ── Moon label ── */
     #moon-label {
@@ -246,14 +451,8 @@
       transition: opacity 0.25s ease-out, transform 0.25s ease-out;
     }
 
-    #dialogue.open {
-      display: block;
-    }
-
-    #dialogue.visible {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    #dialogue.open    { display: block; }
+    #dialogue.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     #dialogue-header {
       display: flex;
@@ -347,26 +546,9 @@
       pointer-events: all;
     }
 
-    .overlay-card .emoji {
-      font-size: 2.4rem;
-      display: block;
-      margin-bottom: 12px;
-    }
-
-    .overlay-card .title {
-      font-family: 'Nunito', sans-serif;
-      font-weight: 800;
-      font-size: 1.4rem;
-      color: var(--ac-ui-heading);
-      margin-bottom: 6px;
-    }
-
-    .overlay-card .sub {
-      font-size: 0.9rem;
-      color: var(--ac-ui-text);
-      opacity: 0.8;
-      margin-bottom: 16px;
-    }
+    .overlay-card .emoji  { font-size: 2.4rem; display: block; margin-bottom: 12px; }
+    .overlay-card .title  { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--ac-ui-heading); margin-bottom: 6px; }
+    .overlay-card .sub    { font-size: 0.9rem; color: var(--ac-ui-text); opacity: 0.8; margin-bottom: 16px; }
 
     .ac-btn {
       background: var(--ac-ui-btn);
@@ -382,10 +564,7 @@
     }
     .ac-btn:hover { background: var(--ac-ui-btn-hover); transform: translateY(-2px); }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.8; }
-      50% { opacity: 1; }
-    }
+    @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
     .pulse { animation: pulse 1.4s infinite; }
 
     #overlay.hidden { display: none; }
@@ -404,10 +583,7 @@
       pointer-events: none;
       transition: opacity 0.25s ease;
     }
-    #moon-modal.open {
-      opacity: 1;
-      pointer-events: all;
-    }
+    #moon-modal.open { opacity: 1; pointer-events: all; }
     #moon-modal-inner {
       background: var(--ac-ui-bg);
       background-image: repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(212,169,106,0.07) 24px);
@@ -425,13 +601,8 @@
       transform: translateY(16px);
       transition: transform 0.25s ease;
     }
-    #moon-modal.open #moon-modal-inner {
-      transform: translateY(0);
-    }
-    #rover-svg {
-      width: 100%;
-      max-width: 260px;
-    }
+    #moon-modal.open #moon-modal-inner { transform: translateY(0); }
+    #rover-svg { width: 100%; max-width: 260px; }
     #moon-modal-text {
       font-family: 'Nunito', sans-serif;
       font-weight: 800;
@@ -474,6 +645,14 @@
   </div>
 </div>
 
+<!-- Tab Bar -->
+<div id="tab-bar">
+  <button class="tab-btn active" data-tab="globe">🌍 Globe</button>
+  <button class="tab-btn" data-tab="list">📋 List</button>
+  <button class="tab-btn" data-tab="stats">📊 Stats</button>
+  <button class="tab-btn" data-tab="forecast">🗓 Forecast</button>
+</div>
+
 <!-- 3D Canvas -->
 <div id="canvas-wrap">
   <canvas id="three-canvas" role="img" aria-label="3D visualisation of Near-Earth Objects"></canvas>
@@ -510,72 +689,45 @@
   <div id="moon-modal-inner">
     <button id="moon-modal-close" aria-label="Close">✕</button>
     <svg id="rover-svg" viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg">
-      <!-- Ground shadow -->
       <ellipse cx="130" cy="188" rx="72" ry="9" fill="rgba(100,70,30,0.18)"/>
-      <!-- Wheels -->
       <circle cx="72" cy="168" r="20" fill="#5C3D1E" stroke="#3D2B1F" stroke-width="3"/>
       <circle cx="72" cy="168" r="11" fill="#D4A96A"/>
       <circle cx="72" cy="168" r="4"  fill="#5C3D1E"/>
       <circle cx="188" cy="168" r="20" fill="#5C3D1E" stroke="#3D2B1F" stroke-width="3"/>
       <circle cx="188" cy="168" r="11" fill="#D4A96A"/>
       <circle cx="188" cy="168" r="4"  fill="#5C3D1E"/>
-      <!-- Car body -->
       <rect x="44" y="130" width="172" height="44" rx="16" fill="#FFCC5C" stroke="#D4A96A" stroke-width="3"/>
-      <!-- Roof -->
       <rect x="72" y="96" width="116" height="42" rx="14" fill="#FFB830" stroke="#D4A96A" stroke-width="3"/>
-      <!-- Window -->
       <rect x="84" y="104" width="42" height="28" rx="8" fill="#B8E8F7" stroke="#D4A96A" stroke-width="2" opacity="0.85"/>
       <rect x="134" y="104" width="42" height="28" rx="8" fill="#B8E8F7" stroke="#D4A96A" stroke-width="2" opacity="0.85"/>
-      <!-- Headlights -->
       <ellipse cx="56" cy="152" rx="9" ry="6" fill="#FFFBF0" stroke="#D4A96A" stroke-width="2"/>
       <ellipse cx="204" cy="152" rx="9" ry="6" fill="#FFFBF0" stroke="#D4A96A" stroke-width="2"/>
-      <!-- Antenna on roof -->
       <line x1="155" y1="96" x2="155" y2="68" stroke="#5C3D1E" stroke-width="2.5" stroke-linecap="round"/>
       <circle cx="155" cy="64" r="5" fill="#FF6B6B" stroke="#5C3D1E" stroke-width="2"/>
-
-      <!-- Astronaut helmet (fishbowl) sitting on roof -->
-      <!-- Neck/suit collar -->
       <rect x="110" y="70" width="40" height="18" rx="8" fill="#EEF6FF" stroke="#B8D8F0" stroke-width="2"/>
-      <!-- Helmet sphere -->
       <circle cx="130" cy="46" r="34" fill="#EEF6FF" stroke="#B8D8F0" stroke-width="3"/>
-      <!-- Tanuki ears (round, like Tom Nook) -->
       <circle cx="103" cy="22" r="12" fill="#7A4E2D" stroke="#5C3310" stroke-width="2"/>
       <circle cx="103" cy="22" r="6.5" fill="#C4855A"/>
       <circle cx="157" cy="22" r="12" fill="#7A4E2D" stroke="#5C3310" stroke-width="2"/>
       <circle cx="157" cy="22" r="6.5" fill="#C4855A"/>
-      <!-- Tom Nook brown fur base -->
       <circle cx="130" cy="49" r="23" fill="#A0714F"/>
-      <!-- Lighter face centre -->
       <ellipse cx="130" cy="51" rx="15" ry="17" fill="#C4956A"/>
-      <!-- Dark raccoon eye patches -->
       <ellipse cx="120" cy="44" rx="8" ry="7" fill="#5C3310"/>
       <ellipse cx="140" cy="44" rx="8" ry="7" fill="#5C3310"/>
-      <!-- Eyes whites -->
       <circle cx="120" cy="44" r="5" fill="white"/>
       <circle cx="140" cy="44" r="5" fill="white"/>
-      <!-- Pupils -->
       <circle cx="121" cy="45" r="3" fill="#1A0F00"/>
       <circle cx="141" cy="45" r="3" fill="#1A0F00"/>
-      <!-- Eye shine -->
       <circle cx="122" cy="43.5" r="1.1" fill="white"/>
       <circle cx="142" cy="43.5" r="1.1" fill="white"/>
-      <!-- Cream muzzle -->
       <ellipse cx="130" cy="56" rx="10" ry="7" fill="#F0DFC0"/>
-      <!-- Nose — dark oval -->
       <ellipse cx="130" cy="51" rx="3.5" ry="2.5" fill="#3D2010"/>
-      <!-- Nostrils -->
       <circle cx="128.2" cy="52" r="0.9" fill="#2A1508"/>
       <circle cx="131.8" cy="52" r="0.9" fill="#2A1508"/>
-      <!-- Friendly Nook smile -->
       <path d="M122 58 Q130 65 138 58" stroke="#3D2010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-      <!-- Visor overlay (subtle, so face is visible) -->
       <ellipse cx="130" cy="44" rx="24" ry="20" fill="#4EB8E0" opacity="0.18" stroke="#2A85C0" stroke-width="2"/>
-      <!-- Visor shine -->
       <ellipse cx="116" cy="34" rx="7" ry="4.5" fill="white" opacity="0.35" transform="rotate(-18,116,34)"/>
-      <!-- Helmet rim -->
       <circle cx="130" cy="46" r="34" fill="none" stroke="#D4A96A" stroke-width="3"/>
-
-      <!-- Stars around helmet -->
       <text x="26"  y="28"  font-size="14" fill="#FFCC5C" opacity="0.9">✦</text>
       <text x="215" y="22"  font-size="10" fill="#FFCC5C" opacity="0.8">✦</text>
       <text x="205" y="55"  font-size="8"  fill="#FFCC5C" opacity="0.7">✦</text>
@@ -594,14 +746,52 @@
   </div>
 </div>
 
+<!-- Tab Content (List / Stats / Forecast) -->
+<div id="tab-content">
+
+  <!-- List Panel -->
+  <div id="panel-list" class="tab-panel active">
+    <div class="section-wrap">
+      <div class="section-heading">📋 NEO List</div>
+      <div id="neo-table-wrap">
+        <table id="neo-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Name</th>
+              <th data-sort="diamMax">Size (m)</th>
+              <th data-sort="velocity">Velocity (km/h)</th>
+              <th data-sort="missLD">Miss Dist (LD)</th>
+              <th data-sort="missKm">Miss Dist (km)</th>
+              <th data-sort="hazardous">Status</th>
+            </tr>
+          </thead>
+          <tbody id="neo-table-body">
+            <tr><td colspan="6" style="padding:20px;opacity:0.5;font-style:italic;">Loading NEO data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Panel -->
+  <div id="panel-stats" class="tab-panel">
+    <div class="section-heading">📊 Statistics</div>
+    <div id="stats-content" style="opacity:0.5;font-style:italic;">Loading…</div>
+  </div>
+
+  <!-- Forecast Panel -->
+  <div id="panel-forecast" class="tab-panel">
+    <div class="section-heading">🗓 7-Day Forecast</div>
+    <div id="forecast-grid" class="forecast-grid"></div>
+  </div>
+
+</div>
+
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// ──────────────────────────────────────────────
-// 🔑 Replace with your NASA API key when ready
 const NASA_API_KEY = "FUGrjEcjBTsBB37j3eK2LK1ZGbN6NgNSxio8gb1k";
-// ──────────────────────────────────────────────
 
 // ── State ─────────────────────────────────────
 let neoObjects = [];
@@ -609,6 +799,7 @@ let neoMarkers = [];
 let hazardousOnly = false;
 let currentNeo = null;
 let typewriterTimer = null;
+let currentTab = 'globe';
 
 // ── Date Init ─────────────────────────────────
 const dateInput = document.getElementById('date-input');
@@ -696,14 +887,12 @@ const earthFragmentShader = `
   uniform vec3 uSunDir;
   uniform float uTime;
 
-  // 3D hash — no UV seam
   float hash3(vec3 p) {
     p = fract(p * vec3(443.897, 397.297, 491.187));
     p += dot(p, p.yxz + 19.19);
     return fract((p.x + p.y) * p.z);
   }
 
-  // 3D value noise
   float noise3(vec3 p) {
     vec3 i = floor(p);
     vec3 f = fract(p);
@@ -729,48 +918,30 @@ const earthFragmentShader = `
   }
 
   void main() {
-    // Use normalised 3D position — seamless over the whole sphere
     vec3 sp = normalize(vPosition);
-
-    // Latitude from Y component
-    float lat = sp.y; // -1..1
-
-    // Continent noise — offset to get interesting shapes
+    float lat = sp.y;
     vec3 noiseP = sp * 2.8 + vec3(1.7, 3.4, 0.9);
     float land = fbm3(noiseP);
     float landThresh = 0.52;
     bool isLand = land > landThresh;
-
-    // Land detail (second noise layer for colour variation)
     float landDetail = fbm3(sp * 5.5 + vec3(5.1, 2.7, 3.3));
     float sandBlend  = smoothstep(0.3, 0.6, landDetail) * smoothstep(0.35, 0.0, abs(lat));
-
     vec3 colGreen = mix(vec3(0.306, 0.788, 0.478), vec3(0.306, 0.620, 0.345), landDetail);
     vec3 colSand  = vec3(0.961, 0.875, 0.627);
     vec3 landCol  = mix(colGreen, colSand, sandBlend * 0.65);
-
-    // Ocean — shallow tint near coast
     float shallowBlend = smoothstep(landThresh - 0.08, landThresh, land);
     vec3 colOceanShallow = vec3(0.306, 0.722, 0.878);
     vec3 colOceanDeep    = vec3(0.165, 0.522, 0.753);
     vec3 oceanCol = mix(colOceanDeep, colOceanShallow, shallowBlend);
-
-    // Specular on ocean
     vec3 sunDir  = normalize(uSunDir);
     vec3 norm    = normalize(vNormal);
     vec3 viewDir = normalize(cameraPosition - vPosition);
     vec3 halfVec = normalize(sunDir + viewDir);
     float spec   = pow(max(dot(norm, halfVec), 0.0), 40.0) * 0.4;
     vec3 specCol = vec3(spec);
-
-    // Combine
     vec3 col = isLand ? landCol : (oceanCol + specCol);
-
-    // Diffuse lighting
     float diff = max(dot(norm, sunDir), 0.0) * 0.6 + 0.4;
     col *= diff;
-
-
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -787,19 +958,7 @@ const earthMat = new THREE.ShaderMaterial({
 const earth = new THREE.Mesh(earthGeo, earthMat);
 scene.add(earth);
 
-// Atmosphere limb
 const atmGeo = new THREE.SphereGeometry(2.08, 64, 64);
-const atmMat = new THREE.MeshBasicMaterial({
-  color: 0xB8E8F7,
-  transparent: true,
-  opacity: 0,
-  side: THREE.BackSide,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-});
-const atmosphere = new THREE.Mesh(atmGeo, atmMat);
-
-// Custom atmosphere using ShaderMaterial for limb effect
 const atmVertShader = `
   varying vec3 vNormal;
   varying vec3 vViewDir;
@@ -819,14 +978,14 @@ const atmFragShader = `
     gl_FragColor = vec4(0.722, 0.910, 0.969, rim * 0.28);
   }
 `;
-atmosphere.material = new THREE.ShaderMaterial({
+const atmosphere = new THREE.Mesh(atmGeo, new THREE.ShaderMaterial({
   vertexShader: atmVertShader,
   fragmentShader: atmFragShader,
   transparent: true,
   side: THREE.BackSide,
   blending: THREE.AdditiveBlending,
   depthWrite: false,
-});
+}));
 scene.add(atmosphere);
 
 // ── Moon ──────────────────────────────────────
@@ -851,7 +1010,6 @@ function fibonacciSphere(index, total) {
 
 // ── Build NEO markers ─────────────────────────
 function buildMarkers(neos) {
-  // Clear old
   while (neoGroup.children.length) {
     const c = neoGroup.children[0];
     c.geometry?.dispose();
@@ -872,7 +1030,6 @@ function buildMarkers(neos) {
     const emissive = isHaz ? 0xFF3333 : 0x55DD55;
     const emissiveIntensity = isHaz ? 1.2 : 0.7;
 
-    // Core sphere — bigger and bright
     const geo = new THREE.SphereGeometry(0.42, 16, 16);
     const mat = new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity, roughness: 0.35, metalness: 0.1 });
     const mesh = new THREE.Mesh(geo, mat);
@@ -883,7 +1040,6 @@ function buildMarkers(neos) {
     neoGroup.add(mesh);
     neoMarkers.push(mesh);
 
-    // Glow halo — additive transparent shell
     const glowGeo = new THREE.SphereGeometry(0.82, 16, 16);
     const glowMat = new THREE.MeshBasicMaterial({
       color: isHaz ? 0xFF4444 : 0x66FF66,
@@ -900,7 +1056,6 @@ function buildMarkers(neos) {
     glow.userData.basePos = pos.clone();
     neoGroup.add(glow);
 
-    // Connector line
     const lineGeo = new THREE.BufferGeometry().setFromPoints([
       dir.clone().multiplyScalar(2.05),
       pos,
@@ -948,11 +1103,10 @@ window.addEventListener('mousemove', (e) => {
 });
 
 window.addEventListener('click', (e) => {
+  if (currentTab !== 'globe') return;
   raycaster.setFromCamera(mouse, camera);
-  // Check moon first
   const moonHits = raycaster.intersectObject(moon);
   if (moonHits.length > 0) { openMoonModal(); return; }
-  // Then NEOs
   const hits = raycaster.intersectObjects(neoMarkers);
   if (hits.length > 0) openDialogue(hits[0].object.userData.neo);
 });
@@ -996,7 +1150,6 @@ function openDialogue(neo) {
   dialogue.classList.add('open');
   requestAnimationFrame(() => dialogue.classList.add('visible'));
 
-  // Typewriter on all val elements
   const valEls = dlgBody.querySelectorAll('.dval');
   let elIdx = 0, charIdx = 0;
   function typeNext() {
@@ -1022,7 +1175,7 @@ function closeDialogue() {
 }
 
 dlgClose.addEventListener('click', closeDialogue);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDialogue(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDialogue(); closeMoonModal(); } });
 document.addEventListener('click', (e) => {
   if (dialogue.classList.contains('open') && !dialogue.contains(e.target) && !neoMarkers.includes(e.target)) {
     closeDialogue();
@@ -1083,10 +1236,9 @@ function hideOverlay() {
   overlay.classList.add('hidden');
 }
 
-// ── NASA API Fetch ────────────────────────────
 // ── Moon Modal ────────────────────────────────
-const moonModal = document.getElementById('moon-modal');
-const moonModalText = document.getElementById('moon-modal-text');
+const moonModal      = document.getElementById('moon-modal');
+const moonModalText  = document.getElementById('moon-modal-text');
 const moonModalClose = document.getElementById('moon-modal-close');
 
 const moonMessages = [
@@ -1105,7 +1257,6 @@ function closeMoonModal() {
 }
 moonModalClose.addEventListener('click', closeMoonModal);
 moonModal.addEventListener('click', (e) => { if (e.target === moonModal) closeMoonModal(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMoonModal(); });
 
 // ── NASA API Fetch ─────────────────────────────
 async function fetchNeos() {
@@ -1135,6 +1286,14 @@ async function fetchNeos() {
     const hazCount = neoObjects.filter(n => n.hazardous).length;
     updateCount(neoObjects.length, hazCount);
     hideOverlay();
+
+    // Refresh whichever non-globe tab is open
+    if (currentTab === 'list')  renderList(neoObjects);
+    if (currentTab === 'stats') renderStats(neoObjects);
+    // Forecast has its own fetch; reset cache so next open re-fetches
+    forecastCache = null;
+    if (currentTab === 'forecast') renderForecast();
+
   } catch (err) {
     console.error(err);
     showError();
@@ -1172,13 +1331,12 @@ function animate() {
   earth.rotation.y += 0.0004;
   earthMat.uniforms.uTime.value = t;
 
-  // NEO float + hover scale + emissive pulse
   neoGroup.children.forEach(obj => {
     const phase = obj.userData.phaseOffset || 0;
     const base  = obj.userData.basePos;
     if (base) obj.position.y = base.y + Math.sin(t + phase) * 0.06;
 
-    if (obj.userData.isGlow) return; // glow halos just float, no scale
+    if (obj.userData.isGlow) return;
 
     const m = obj;
     const target = (m === hoveredMarker) ? 1.6 : 1.0;
@@ -1192,12 +1350,280 @@ function animate() {
   });
 
   controls.update();
-  updateMoonLabel();
+  if (currentTab === 'globe') updateMoonLabel();
   renderer.render(scene, camera);
 }
 
+// ── Tab System ────────────────────────────────
+const tabContent  = document.getElementById('tab-content');
+const canvasWrap  = document.getElementById('canvas-wrap');
+const countPanel  = document.getElementById('count-panel');
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+function switchTab(tab) {
+  currentTab = tab;
+
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab)
+  );
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  if (tab === 'globe') {
+    tabContent.classList.remove('active');
+    canvasWrap.style.visibility = '';
+    countPanel.style.display = '';
+    moonLabel.style.display  = '';
+  } else {
+    tabContent.classList.add('active');
+    canvasWrap.style.visibility = 'hidden';
+    countPanel.style.display = 'none';
+    moonLabel.style.display  = 'none';
+    tooltip.style.display    = 'none';
+    closeDialogue();
+
+    const panel = document.getElementById('panel-' + tab);
+    if (panel) panel.classList.add('active');
+
+    if (tab === 'list')     renderList(neoObjects);
+    if (tab === 'stats')    renderStats(neoObjects);
+    if (tab === 'forecast') renderForecast();
+  }
+}
+
+// ── List Tab ──────────────────────────────────
+let sortKey = 'missLD';
+let sortDir = 1;
+
+function velNum(v) { return parseFloat(String(v).replace(/,/g, '')); }
+
+function renderList(neos) {
+  const tbody = document.getElementById('neo-table-body');
+
+  if (!neos.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;opacity:0.5;font-style:italic;">No NEO data loaded.</td></tr>';
+    return;
+  }
+
+  const sorted = [...neos].sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (sortKey === 'hazardous') { av = av ? 1 : 0; bv = bv ? 1 : 0; }
+    else if (sortKey === 'velocity') { av = velNum(av); bv = velNum(bv); }
+    else { av = parseFloat(av); bv = parseFloat(bv); if (isNaN(av)) { av = a[sortKey]; bv = b[sortKey]; } }
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+
+  tbody.innerHTML = sorted.map((neo, i) => `
+    <tr class="${neo.hazardous ? 'hazardous-row' : ''}" data-idx="${i}">
+      <td>${neo.name}</td>
+      <td>${neo.diamMin}–${neo.diamMax}</td>
+      <td>${neo.velocity}</td>
+      <td>${parseFloat(neo.missLD).toFixed(3)}</td>
+      <td>${parseInt(neo.missKm).toLocaleString()}</td>
+      <td><span class="haz-badge ${neo.hazardous ? 'haz' : 'safe'}">${neo.hazardous ? '⚠ HAZARDOUS' : '✓ SAFE'}</span></td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.addEventListener('click', () => {
+      const neo = sorted[parseInt(row.dataset.idx)];
+      switchTab('globe');
+      setTimeout(() => openDialogue(neo), 120);
+    });
+  });
+
+  document.querySelectorAll('#neo-table th').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.sort === sortKey) th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+}
+
+document.querySelectorAll('#neo-table th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    if (sortKey === th.dataset.sort) sortDir *= -1;
+    else { sortKey = th.dataset.sort; sortDir = 1; }
+    renderList(neoObjects);
+  });
+});
+
+// ── Stats Tab ─────────────────────────────────
+function renderStats(neos) {
+  const container = document.getElementById('stats-content');
+  if (!neos.length) {
+    container.innerHTML = '<p style="opacity:0.6;font-style:italic;">No data loaded yet.</p>';
+    return;
+  }
+
+  const total    = neos.length;
+  const hazCount = neos.filter(n => n.hazardous).length;
+  const avgLD    = (neos.reduce((s, n) => s + parseFloat(n.missLD), 0) / total).toFixed(2);
+  const avgV     = Math.round(neos.reduce((s, n) => s + velNum(n.velocity), 0) / total).toLocaleString();
+
+  const buckets = [
+    { label: '< 50 m',    min: 0,   max: 50   },
+    { label: '50–200 m',  min: 50,  max: 200  },
+    { label: '200–500 m', min: 200, max: 500  },
+    { label: '> 500 m',   min: 500, max: Infinity },
+  ];
+  const bucketed = buckets.map(b => ({
+    ...b,
+    count: neos.filter(n => n.diamMax >= b.min && n.diamMax < b.max).length,
+  }));
+  const maxBucket = Math.max(...bucketed.map(b => b.count), 1);
+  const barColors = ['#78C97A', '#4EB8E0', '#FFCC5C', '#FF6B6B'];
+
+  const fastest = neos.reduce((a, b) => velNum(a.velocity) > velNum(b.velocity) ? a : b);
+  const closest = neos.reduce((a, b) => parseFloat(a.missLD) < parseFloat(b.missLD) ? a : b);
+  const largest = neos.reduce((a, b) => a.diamMax > b.diamMax ? a : b);
+
+  container.innerHTML = `
+    <div class="section-wrap">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>Total NEOs</h3>
+          <div class="stat-big">☄️ ${total}</div>
+          <div class="stat-sub">near-Earth objects today</div>
+        </div>
+        <div class="stat-card">
+          <h3>Hazardous</h3>
+          <div class="stat-big" style="color:var(--ac-ui-accent)">⚠️ ${hazCount}</div>
+          <div class="stat-sub">${((hazCount / total) * 100).toFixed(0)}% of today's NEOs</div>
+        </div>
+        <div class="stat-card">
+          <h3>Avg Miss Distance</h3>
+          <div class="stat-big">🌕 ${avgLD}</div>
+          <div class="stat-sub">lunar distances (average)</div>
+        </div>
+        <div class="stat-card">
+          <h3>Avg Velocity</h3>
+          <div class="stat-big" style="font-size:1.5rem">💨 ${avgV}</div>
+          <div class="stat-sub">km/h (average)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-wrap">
+      <div class="section-heading" style="font-size:1rem;margin-bottom:12px;">📏 Size Distribution</div>
+      <div class="stat-card" style="max-width:540px;">
+        <div class="bar-chart">
+          ${bucketed.map((b, i) => `
+            <div class="bar-row">
+              <div class="bar-label">${b.label}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${Math.max((b.count / maxBucket) * 100, b.count ? 4 : 0)}%;background:${barColors[i]}">
+                  <span class="bar-count">${b.count}</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-wrap">
+      <div class="section-heading" style="font-size:1rem;margin-bottom:12px;">🏆 Today's Highlights</div>
+      <div class="highlight-grid">
+        <div class="highlight-card">
+          <div class="hc-emoji">⚡</div>
+          <div class="hc-label">Fastest</div>
+          <div class="hc-name">${fastest.name}</div>
+          <div class="hc-val">${fastest.velocity} km/h</div>
+        </div>
+        <div class="highlight-card">
+          <div class="hc-emoji">🎯</div>
+          <div class="hc-label">Closest Pass</div>
+          <div class="hc-name">${closest.name}</div>
+          <div class="hc-val">${parseFloat(closest.missLD).toFixed(3)} LD</div>
+        </div>
+        <div class="highlight-card">
+          <div class="hc-emoji">📐</div>
+          <div class="hc-label">Largest</div>
+          <div class="hc-name">${largest.name}</div>
+          <div class="hc-val">up to ${largest.diamMax} m wide</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Forecast Tab ──────────────────────────────
+let forecastCache = null;
+let forecastDate  = null;
+
+function fmtDate(str) {
+  const d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function fmtDay(str) {
+  const d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'long' });
+}
+function addDays(base, n) {
+  const d = new Date(base + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+async function renderForecast() {
+  const grid     = document.getElementById('forecast-grid');
+  const startDate = dateInput.value;
+  const days     = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
+
+  // Placeholder skeleton
+  grid.innerHTML = days.map(d => `
+    <div class="forecast-card${d === startDate ? ' is-today' : ''}" id="fc-${d}">
+      <div class="fc-date">${fmtDate(d)}</div>
+      <div class="fc-day">${fmtDay(d)}${d === startDate ? ' · Today' : ''}</div>
+      <div class="fc-spinner pulse">Loading…</div>
+    </div>
+  `).join('');
+
+  // Use cache if same date
+  if (forecastCache && forecastDate === startDate) {
+    populateForecast(forecastCache, startDate);
+    return;
+  }
+
+  const endDate = days[days.length - 1];
+  const url = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${startDate}&end_date=${endDate}&api_key=${NASA_API_KEY}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    forecastCache = data.near_earth_objects;
+    forecastDate  = startDate;
+    populateForecast(forecastCache, startDate);
+  } catch (err) {
+    grid.innerHTML = '<div style="padding:20px;opacity:0.6;">Failed to load forecast. Check your connection.</div>';
+  }
+}
+
+function populateForecast(neosByDate, startDate) {
+  Object.entries(neosByDate).sort().forEach(([date, neos]) => {
+    const card = document.getElementById('fc-' + date);
+    if (!card) return;
+    const hazCount = neos.filter(n => n.is_potentially_hazardous_asteroid).length;
+    if (hazCount > 0) card.classList.add('has-haz');
+    card.innerHTML = `
+      <div class="fc-date">${fmtDate(date)}</div>
+      <div class="fc-day">${fmtDay(date)}${date === startDate ? ' · Today' : ''}</div>
+      <div class="fc-total">${neos.length}</div>
+      <div class="fc-total-lbl">NEOs</div>
+      <div class="fc-haz ${hazCount === 0 ? 'none' : ''}">${hazCount > 0 ? `⚠ ${hazCount} hazardous` : '✓ None hazardous'}</div>
+    `;
+  });
+}
+
 // ── Init ──────────────────────────────────────
-dateInput.addEventListener('change', fetchNeos);
+dateInput.addEventListener('change', () => {
+  forecastCache = null;
+  fetchNeos();
+  if (currentTab === 'forecast') renderForecast();
+});
+
 fetchNeos();
 animate();
 </script>
